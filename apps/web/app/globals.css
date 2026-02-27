@@ -1,15 +1,14 @@
 @import "tailwindcss";
 
-/* Variables de color del tema Segurinite */
 :root {
-  --color-fondo-app: #575EAA;       /* Fondo exterior morado */
-  --color-sidebar-bg: #ffffff;      /* Fondo blanco del sidebar */
-  --color-contenido-bg: #ffffff;    /* Fondo blanco del panel derecho */
-  --color-acento: #5c5ca8;          /* Morado principal (avatares, tabs activos) */
-  --color-acento-hover: #4a4a8a;    /* Morado oscuro para hover */
-  --color-borde: #e5e7eb;           /* Bordes grises claros */
-  --color-texto-titulo: #2d2d2d;    /* Texto oscuro para títulos */
-  --color-texto-secundario: #6b7280; /* Texto gris para subtítulos */
+  --color-fondo-app: #575EAA;
+  --color-sidebar-bg: #ffffff;
+  --color-contenido-bg: #ffffff;
+  --color-acento: #5c5ca8;
+  --color-acento-hover: #4a4a8a;
+  --color-borde: #e5e7eb;
+  --color-texto-titulo: #2d2d2d;
+  --color-texto-secundario: #6b7280;
 }
 
 * {
@@ -20,5 +19,5 @@
 
 html, body {
   height: 100%;
-  overflow: hidden; /* Evita scroll en el body; cada panel maneja su propio scroll */
+  overflow: hidden;
 }

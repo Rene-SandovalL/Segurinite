@@ -11,66 +11,58 @@ interface Props {
   params: { grupoId: string };
 }
 
-/**
- * Página: /grupos/[grupoId]/integrantes
- * Muestra las 3 pestañas y el grid de alumnos del grupo seleccionado.
- *
- * params.grupoId → viene de la URL, ej: /grupos/4a → grupoId = "4a"
- */
 export default function IntegrantesPage({ params }: Props) {
   const [tabActiva, setTabActiva] = useState<TabActiva>("integrantes");
-
-  // Busca el grupo en los datos de prueba usando el ID de la URL
   const grupo = gruposMock.find((g: Grupo) => g.id === params.grupoId) ?? gruposMock[0]!;
 
   function handleAgregarAlumno() {
-    // TODO: abrir modal de registro de alumno + vinculación de pulsera BLE
     alert("Próximamente: Formulario para registrar alumno y vincular pulsera");
   }
 
   return (
     <div className="flex flex-col h-full">
       {/* ── Título del grupo ── */}
-      <div className="px-8 pt-6 pb-2">
-        <h1 className="text-3xl font-bold text-white tracking-wide uppercase">
+      <div className="px-10 pt-6 pb-3">
+        <h1 className="text-[42px] font-bold text-white tracking-wide uppercase leading-tight">
           {grupo.nombre}
         </h1>
       </div>
 
-      {/* ── Pestañas ── */}
-      <div className="px-8">
+      {/* ── Contenedor de pestañas + panel blanco ── */}
+      <div className="flex-1 flex flex-col mx-5 mb-5 min-h-0">
+
+        {/* Pestañas */}
         <TabNavegacion tabActiva={tabActiva} onCambiarTab={setTabActiva} />
-      </div>
 
-      {/*
-        Panel blanco de contenido.
-        rounded-tl-none → la esquina superior izquierda queda recta
-        para "conectarse" visualmente con la pestaña Integrantes activa.
-        Cuando la pestaña activa NO es "integrantes", se redondean todas las esquinas.
-      */}
-      <div className={`flex-1 bg-white mx-6 mb-6 rounded-2xl overflow-y-auto p-6 shadow-sm ${tabActiva === "integrantes" ? "rounded-tl-none" : ""}`}>
+        {/* Panel blanco de contenido */}
+        <div
+          className={`
+            flex-1 bg-white overflow-y-auto p-8 shadow-sm
+            ${tabActiva === "integrantes"
+              ? "rounded-tr-2xl rounded-b-2xl"
+              : "rounded-2xl"
+            }
+          `}
+        >
+          {tabActiva === "integrantes" && (
+            <IntegrantesGrid
+              alumnos={alumnosMock.filter((a: Alumno) => a.grupoId === grupo.id)}
+              onAgregarAlumno={handleAgregarAlumno}
+            />
+          )}
 
-        {/* Pestaña: Integrantes */}
-        {tabActiva === "integrantes" && (
-          <IntegrantesGrid
-            alumnos={alumnosMock.filter((a: Alumno) => a.grupoId === grupo.id)}
-            onAgregarAlumno={handleAgregarAlumno}
-          />
-        )}
+          {tabActiva === "mapa" && (
+            <div className="flex items-center justify-center h-full text-gray-400">
+              <p className="text-lg">🗺️ Próximamente: Mapa interactivo del plantel</p>
+            </div>
+          )}
 
-        {/* Pestaña: Mapa (placeholder hasta que se implemente) */}
-        {tabActiva === "mapa" && (
-          <div className="flex items-center justify-center h-full text-gray-400">
-            <p className="text-lg">🗺️ Próximamente: Mapa interactivo del plantel</p>
-          </div>
-        )}
-
-        {/* Pestaña: Docente (placeholder) */}
-        {tabActiva === "docente" && (
-          <div className="flex items-center justify-center h-full text-gray-400">
-            <p className="text-lg">👩‍🏫 Próximamente: Información del docente asignado</p>
-          </div>
-        )}
+          {tabActiva === "docente" && (
+            <div className="flex items-center justify-center h-full text-gray-400">
+              <p className="text-lg">👩‍🏫 Próximamente: Información del docente asignado</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
