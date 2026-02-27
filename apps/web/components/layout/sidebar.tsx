@@ -25,10 +25,10 @@ export function Sidebar({ grupos }: SidebarProps) {
   }
 
   return (
-    <aside className="w-72 h-full bg-white flex flex-col shadow-lg shrink-0 z-10">
+    <aside className="w-64 h-full bg-white flex flex-col shadow-lg shrink-0 z-10">
 
       {/* ── Logo / Encabezado ── */}
-      <div className="px-5 pt-5 pb-4">
+      <div className="px-4 pt-4 pb-3">
         <div className="flex items-center gap-3">
           {/* Ícono hamburguesa dentro de círculo con sombra */}
           <button
@@ -47,10 +47,10 @@ export function Sidebar({ grupos }: SidebarProps) {
       </div>
 
       {/* ── Línea divisora ── */}
-      <div className="mx-5 border-t border-gray-200" />
+      <div className="mx-4 border-t border-gray-200" />
 
       {/* ── Lista de grupos + botón agregar ── */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+      <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-2.5">
         {grupos.map((grupo) => {
           // Determina si este grupo es el activo según la URL
           const estaActivo = pathname.includes(`/grupos/${grupo.id}`);
@@ -66,7 +66,7 @@ export function Sidebar({ grupos }: SidebarProps) {
         {/* Botón agregar grupo — justo debajo del último grupo */}
         <button
           onClick={handleAgregarGrupo}
-          className="w-full py-3 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-500 text-2xl font-light transition-colors"
+          className="mx-0 mb-0 w-full py-3 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-500 text-2xl font-light transition-colors"
           aria-label="Agregar nuevo grupo"
         >
           +

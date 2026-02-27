@@ -24,10 +24,10 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="h-screen bg-[#575EAA] flex overflow-hidden">
-      {/* Sidebar fijo a la izquierda */}
+      {/* Sidebar fijo a la izquierda — ocupa todo el alto sin flotar */}
       <Sidebar grupos={gruposMock} />
 
-      {/* Contenido dinámico según la ruta activa */}
+      {/* Contenido dinámico — flota sobre el fondo morado */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {children}
       </main>

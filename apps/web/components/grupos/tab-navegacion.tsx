@@ -27,13 +27,13 @@ const tabs: { id: TabActiva; label: string }[] = [
  */
 export function TabNavegacion({ tabActiva, onCambiarTab }: TabNavegacionProps) {
   return (
-    <div className="flex gap-1 items-end">
+    <div className="flex gap-2 items-end">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => onCambiarTab(tab.id)}
           className={`
-            px-10 py-3 rounded-t-2xl text-sm font-semibold transition-all
+            px-14 py-4 rounded-t-2xl text-sm font-semibold transition-all
             ${tabActiva === tab.id
               ? "bg-white text-gray-800 shadow-sm relative z-10 -mb-px"
               : "bg-gray-300/80 text-gray-500 hover:bg-gray-200"

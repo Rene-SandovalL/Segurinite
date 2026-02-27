@@ -23,7 +23,7 @@ export function GrupoCard({ grupo, activo }: GrupoCardProps) {
   return (
     <div
       className={`
-        w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all cursor-pointer
+        w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl transition-all cursor-pointer
         border border-gray-200 shadow-sm
         ${activo ? "bg-gray-50 shadow-md" : "bg-white hover:bg-gray-50 hover:shadow-md"}
       `}
@@ -31,7 +31,7 @@ export function GrupoCard({ grupo, activo }: GrupoCardProps) {
       {/* Avatar cuadrado con color del grupo */}
       <div
         className={`
-          w-12 h-12 rounded-lg flex items-center justify-center
+          w-11 h-11 rounded-lg flex items-center justify-center
           text-white font-bold text-lg shrink-0
           ${mapaColores[grupo.color]}
         `}
@@ -40,8 +40,8 @@ export function GrupoCard({ grupo, activo }: GrupoCardProps) {
       </div>
 
       {/* Nombre e indicadores de alumnos */}
-      <div className="flex flex-col items-start gap-1.5 min-w-0">
-        <span className="text-sm font-bold text-gray-700 truncate w-full text-left">
+      <div className="flex flex-col items-start gap-1 min-w-0">
+        <span className="text-xs font-bold text-gray-700 truncate w-full text-left">
           {grupo.nombre}
         </span>
 
@@ -49,9 +49,9 @@ export function GrupoCard({ grupo, activo }: GrupoCardProps) {
           Puntos grises: representan visualmente el total de alumnos.
           Se muestran máximo 8 para no desbordar el sidebar.
         */}
-        <div className="flex gap-1 flex-wrap">
+        <div className="flex gap-0.5 flex-wrap">
           {Array.from({ length: Math.min(grupo.totalAlumnos, 8) }).map((_, i) => (
-            <span key={i} className="w-2.5 h-2.5 rounded-full bg-gray-300 inline-block" />
+            <span key={i} className="w-2 h-2 rounded-full bg-gray-300 inline-block" />
           ))}
         </div>
       </div>

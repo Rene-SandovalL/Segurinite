@@ -31,8 +31,8 @@ export default function IntegrantesPage({ params }: Props) {
   return (
     <div className="flex flex-col h-full">
       {/* ── Título del grupo ── */}
-      <div className="px-10 pt-8 pb-4">
-        <h1 className="text-4xl font-bold text-white tracking-wide uppercase">
+      <div className="px-8 pt-6 pb-2">
+        <h1 className="text-3xl font-bold text-white tracking-wide uppercase">
           {grupo.nombre}
         </h1>
       </div>
@@ -46,8 +46,9 @@ export default function IntegrantesPage({ params }: Props) {
         Panel blanco de contenido.
         rounded-tl-none → la esquina superior izquierda queda recta
         para "conectarse" visualmente con la pestaña Integrantes activa.
+        Cuando la pestaña activa NO es "integrantes", se redondean todas las esquinas.
       */}
-      <div className="flex-1 bg-white mx-5 mb-5 rounded-2xl rounded-tl-none overflow-y-auto p-8 shadow-sm">
+      <div className={`flex-1 bg-white mx-6 mb-6 rounded-2xl overflow-y-auto p-6 shadow-sm ${tabActiva === "integrantes" ? "rounded-tl-none" : ""}`}>
 
         {/* Pestaña: Integrantes */}
         {tabActiva === "integrantes" && (
