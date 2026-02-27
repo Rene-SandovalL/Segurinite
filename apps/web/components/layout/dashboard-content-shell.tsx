@@ -1,4 +1,5 @@
 import { type ReactNode } from "react";
+import { GrupoDetailHeader } from "../grupos/grupo-detail-header";
 
 interface DashboardContentShellProps {
 	titulo: string;
@@ -17,11 +18,7 @@ export function DashboardContentShell({
 
 	return (
 		<div className="h-full flex flex-col bg-transparent">
-			<header className="px-8 pt-4 pb-3 shrink-0">
-				<h1 className="text-[clamp(2.3rem,3.6vw,3.7rem)] font-medium text-white tracking-[0.03em] uppercase leading-none">
-					{titulo}
-				</h1>
-			</header>
+			<GrupoDetailHeader titulo={titulo} />
 
 			<div className="flex-1 min-h-0" style={{ padding: "0 28px 24px" }}>
 				<div className="h-full flex flex-col">

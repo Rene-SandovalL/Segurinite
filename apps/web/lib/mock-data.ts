@@ -1,5 +1,6 @@
 import { type Grupo } from "../types/grupo";
 import { type Alumno } from "../types/alumno";
+import { type DocenteGrupo } from "../types/usuario";
 
 /** Grupos de prueba — reemplazar por llamada a la API cuando esté lista */
 export const gruposMock: Grupo[] = [
@@ -24,3 +25,21 @@ export const alumnosMock: Alumno[] = [
   { id: "11", nombre: "SANTIAGO", apellido: "QUINTERO", iniciales: "SQ", grupoId: "4a", estado: "normal" },
   { id: "12", nombre: "TRISTAN", apellido: "VAZQUES", iniciales: "TV", grupoId: "4a", estado: "normal" },
 ];
+
+export const docentesPorGrupoMock: Record<string, DocenteGrupo> = {
+  "4a": {
+    id: "d-4a",
+    grupoId: "4a",
+    rol: "docente",
+    nombre: "RAYMUNDO",
+    apellido: "MEDRANO",
+    nombreCompleto: "Raymundo Medrano",
+    iniciales: "RM",
+    nombrePlataforma: "Rayblox Gamer",
+    gatewayEstado: "Activo",
+    fechaNacimiento: "12/07/1986",
+    correo: "raymundo.medrano@segurinite.edu.mx",
+    telefono: "+52 614 221 8890",
+    observaciones: "Sin incidencias",
+  },
+};

@@ -1,4 +1,5 @@
 import { Sidebar } from "../../components/layout/sidebar";
+import { MainContent } from "../../components/layout/main-content";
 import { gruposMock } from "../../lib/mock-data";
 
 export default function DashboardLayout({
@@ -12,9 +13,9 @@ export default function DashboardLayout({
       <Sidebar grupos={gruposMock} />
 
       {/* Contenido dinámico */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <MainContent>
         {children}
-      </main>
+      </MainContent>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { type Alumno } from "../../types/alumno";
 import { AlumnoCard } from "./alumno-card";
+import { AddAlumnoButton } from "./add-alumno-button";
 
 interface IntegrantesGridProps {
   alumnos: Alumno[];
@@ -19,13 +20,7 @@ export function IntegrantesGrid({ alumnos, onAgregarAlumno }: IntegrantesGridPro
       </div>
 
       {/* Botón para agregar nuevo alumno */}
-      <button
-        onClick={onAgregarAlumno}
-        className="w-full h-14 rounded-2xl bg-[#d0d1d6] hover:bg-[#c4c6cb] text-gray-600 text-4xl leading-none font-light transition-all"
-        aria-label="Agregar nuevo alumno"
-      >
-        +
-      </button>
+      <AddAlumnoButton onClick={onAgregarAlumno} />
     </div>
   );
 }
