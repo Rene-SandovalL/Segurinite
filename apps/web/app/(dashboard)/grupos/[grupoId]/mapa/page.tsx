@@ -4,11 +4,12 @@ import { gruposMock } from "../../../../../lib/mock-data";
 import type { Grupo } from "../../../../../types/grupo";
 
 interface Props {
-  params: { grupoId: string };
+  params: Promise<{ grupoId: string }>;
 }
 
-export default function MapaPage({ params }: Props) {
-  const grupo = gruposMock.find((g: Grupo) => g.id === params.grupoId) ?? gruposMock[0]!;
+export default async function MapaPage({ params }: Props) {
+  const { grupoId } = await params;
+  const grupo = gruposMock.find((g: Grupo) => g.id === grupoId) ?? gruposMock[0]!;
 
   return (
     <DashboardContentShell

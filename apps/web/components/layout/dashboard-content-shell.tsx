@@ -3,7 +3,7 @@ import { GrupoDetailHeader } from "../grupos/grupo-detail-header";
 
 interface DashboardContentShellProps {
 	titulo: string;
-	tabs: ReactNode;
+	tabs?: ReactNode;
 	children: ReactNode;
 	unirConTabs?: boolean;
 }
@@ -14,8 +14,8 @@ export function DashboardContentShell({
 	children,
 	unirConTabs = true,
 }: DashboardContentShellProps) {
-	void unirConTabs;
-	const panelRadius = "0 22px 22px 22px";
+	const hayTabs = tabs !== undefined && tabs !== null;
+	const panelRadius = hayTabs && unirConTabs ? "0 22px 22px 22px" : "22px";
 
 	return (
 		<div className="h-full flex flex-col bg-transparent">
@@ -23,7 +23,7 @@ export function DashboardContentShell({
 
 			<div className="flex-1 min-h-0" style={{ padding: "30px 25px 24px" }}>
 				<div className="h-full flex flex-col">
-					<div>{tabs}</div>
+					{hayTabs ? <div>{tabs}</div> : null}
 
 					<section
 						className="flex-1 min-h-0 overflow-y-auto"
@@ -32,7 +32,7 @@ export function DashboardContentShell({
 							border: "1px solid rgba(156, 163, 175, 0.6)",
 							borderRadius: panelRadius,
 							boxShadow: "0 14px 28px rgba(0, 0, 0, 0.22)",
-							padding: "42px 56px 34px",
+							padding: "clamp(16px, 2.1vw, 30px) clamp(16px, 2.3vw, 36px) clamp(14px, 1.8vw, 26px)",
 						}}
 					>
 						{children}

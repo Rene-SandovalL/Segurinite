@@ -12,7 +12,39 @@ export const gruposMock: Grupo[] = [
 
 /** Alumnos de prueba del Grupo 4-A — reemplazar por llamada a la API */
 export const alumnosMock: Alumno[] = [
-  { id: "1", nombre: "ALEJANDRO", apellido: "GONZALEZ", iniciales: "AG", grupoId: "4a", estado: "peligro" },
+  {
+    id: "1",
+    nombre: "ALEJANDRO",
+    apellido: "GONZALEZ",
+    iniciales: "AG",
+    grupoId: "4a",
+    estado: "peligro",
+    nombreCompleto: "Alejandro Gonzalez Escalera",
+    edad: 24,
+    fechaNacimiento: "13/01/2005",
+    tipoSangre: "A+",
+    direccion: "Benito Juarez #202 Col. Centro.",
+    nombrePadre: "Ramon Antonio Gonzalez",
+    telefonoPadre: "6698585845",
+    fotoUrl: "/alumnos/alejandro.jpg",
+    idDispositivo: "SEG-WB",
+    ultimaConexion: "Hace 5 minutos",
+    contactosEmergencia: [
+      {
+        nombre: "Hector Gonzalez",
+        edad: 84,
+        fechaNacimiento: "25/10/1925",
+        telefono: "66916585454",
+      },
+    ],
+    datosVitales: {
+      presionSys: 118,
+      presionDia: 78,
+      pulso: 76,
+      temperatura: 26.6,
+      ultimaLectura: "Hace 5 min.",
+    },
+  },
   { id: "2", nombre: "RAYMUNDO", apellido: "MEDRANO", iniciales: "RM", grupoId: "4a", estado: "normal" },
   { id: "3", nombre: "CARLOS", apellido: "MEZA", iniciales: "CM", grupoId: "4a", estado: "normal" },
   { id: "4", nombre: "JOSE", apellido: "GUTIERREZ", iniciales: "JG", grupoId: "4a", estado: "normal" },
@@ -26,20 +58,24 @@ export const alumnosMock: Alumno[] = [
   { id: "12", nombre: "TRISTAN", apellido: "VAZQUES", iniciales: "TV", grupoId: "4a", estado: "normal" },
 ];
 
+/** Datos base del docente — se reutilizan para todos los grupos */
+const docenteBase = {
+  rol: "docente" as const,
+  nombre: "RAYMUNDO",
+  apellido: "MEDRANO",
+  nombreCompleto: "Raymundo Medrano",
+  iniciales: "RM",
+  nombrePlataforma: "Rayblox Gamer",
+  gatewayEstado: "Activo",
+  fechaNacimiento: "12/07/1986",
+  correo: "raymundo.medrano@segurinite.edu.mx",
+  telefono: "+52 614 221 8890",
+  observaciones: "Sin incidencias",
+};
+
 export const docentesPorGrupoMock: Record<string, DocenteGrupo> = {
-  "4a": {
-    id: "d-4a",
-    grupoId: "4a",
-    rol: "docente",
-    nombre: "RAYMUNDO",
-    apellido: "MEDRANO",
-    nombreCompleto: "Raymundo Medrano",
-    iniciales: "RM",
-    nombrePlataforma: "Rayblox Gamer",
-    gatewayEstado: "Activo",
-    fechaNacimiento: "12/07/1986",
-    correo: "raymundo.medrano@segurinite.edu.mx",
-    telefono: "+52 614 221 8890",
-    observaciones: "Sin incidencias",
-  },
+  "4a": { ...docenteBase, id: "d-4a", grupoId: "4a" },
+  "2b": { ...docenteBase, id: "d-2b", grupoId: "2b" },
+  "1a": { ...docenteBase, id: "d-1a", grupoId: "1a" },
+  "1b": { ...docenteBase, id: "d-1b", grupoId: "1b" },
 };

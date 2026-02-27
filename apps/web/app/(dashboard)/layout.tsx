@@ -1,5 +1,6 @@
 import { Sidebar } from "../../components/layout/sidebar";
 import { MainContent } from "../../components/layout/main-content";
+import { DashboardShell } from "../../components/layout/dashboard-shell";
 import { gruposMock } from "../../lib/mock-data";
 
 export default function DashboardLayout({
@@ -8,12 +9,12 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="h-screen bg-[#575EAA] flex overflow-hidden">
+    <DashboardShell>
       <Sidebar grupos={gruposMock} />
 
       <MainContent>
         {children}
       </MainContent>
-    </div>
+    </DashboardShell>
   );
 }

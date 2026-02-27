@@ -1,15 +1,17 @@
+import Link from "next/link";
+
 interface AddAlumnoButtonProps {
-  onClick: () => void;
+  href: string;
 }
 
-export function AddAlumnoButton({ onClick }: AddAlumnoButtonProps) {
+export function AddAlumnoButton({ href }: AddAlumnoButtonProps) {
   return (
-    <button
-      onClick={onClick}
-      className="w-full h-14 rounded-2xl bg-[#d0d1d6] hover:bg-[#c4c6cb] text-gray-600 text-4xl leading-none font-light transition-all"
+    <Link
+      href={href}
+      className="w-full h-14 rounded-2xl bg-[#d0d1d6] hover:bg-[#c4c6cb] text-gray-600 text-4xl leading-none font-light transition-all flex items-center justify-center"
       aria-label="Agregar nuevo alumno"
     >
       +
-    </button>
+    </Link>
   );
 }

@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 
 interface Props {
-  params: { grupoId: string };
+  params: Promise<{ grupoId: string }>;
 }
 
-export default function GrupoPage({ params }: Props) {
-  redirect(`/grupos/${params.grupoId}/integrantes`);
+export default async function GrupoPage({ params }: Props) {
+  const { grupoId } = await params;
+  redirect(`/grupos/${grupoId}/integrantes`);
 }

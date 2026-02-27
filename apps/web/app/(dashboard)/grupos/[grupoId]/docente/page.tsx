@@ -5,11 +5,12 @@ import { docentesPorGrupoMock, gruposMock } from "../../../../../lib/mock-data";
 import type { Grupo } from "../../../../../types/grupo";
 
 interface Props {
-  params: { grupoId: string };
+  params: Promise<{ grupoId: string }>;
 }
 
-export default function DocentePage({ params }: Props) {
-  const grupo = gruposMock.find((g: Grupo) => g.id === params.grupoId) ?? gruposMock[0]!;
+export default async function DocentePage({ params }: Props) {
+  const { grupoId } = await params;
+  const grupo = gruposMock.find((g: Grupo) => g.id === grupoId) ?? gruposMock[0]!;
   const docente = docentesPorGrupoMock[grupo.id] ?? docentesPorGrupoMock["4a"]!;
 
   return (

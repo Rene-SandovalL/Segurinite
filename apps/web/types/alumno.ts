@@ -1,6 +1,21 @@
 /** Estado de salud/seguridad del alumno — semáforo */
 export type EstadoAlumno = "normal" | "alerta" | "peligro";
 
+export interface ContactoEmergencia {
+  nombre: string;
+  edad: number;
+  fechaNacimiento: string;
+  telefono: string;
+}
+
+export interface DatosVitales {
+  presionSys: number;
+  presionDia: number;
+  pulso: number;
+  temperatura: number;
+  ultimaLectura: string;
+}
+
 /** Representa un Alumno dentro de un grupo */
 export interface Alumno {
   id: string;
@@ -9,4 +24,16 @@ export interface Alumno {
   iniciales: string;    // Ej: "AG" — se muestra en el avatar
   grupoId: string;      // ID del grupo al que pertenece
   estado: EstadoAlumno; // Para el semáforo de color
+  nombreCompleto?: string;
+  edad?: number;
+  fechaNacimiento?: string;
+  tipoSangre?: string;
+  direccion?: string;
+  nombrePadre?: string;
+  telefonoPadre?: string;
+  fotoUrl?: string;
+  idDispositivo?: string;
+  ultimaConexion?: string;
+  contactosEmergencia?: ContactoEmergencia[];
+  datosVitales?: DatosVitales;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { use } from "react";
 import { TabNavigation } from "../../../../../components/grupos/tab-navigation";
 import { DashboardContentShell } from "../../../../../components/layout/dashboard-content-shell";
 import { IntegrantesGrid } from "../../../../../components/alumnos/integrantes-grid";
@@ -8,15 +9,12 @@ import type { Grupo } from "../../../../../types/grupo";
 import type { Alumno } from "../../../../../types/alumno";
 
 interface Props {
-  params: { grupoId: string };
+  params: Promise<{ grupoId: string }>;
 }
 
 export default function IntegrantesPage({ params }: Props) {
-  const grupo = gruposMock.find((g: Grupo) => g.id === params.grupoId) ?? gruposMock[0]!;
-
-  function handleAgregarAlumno() {
-    alert("Próximamente: Formulario para registrar alumno y vincular pulsera");
-  }
+  const { grupoId } = use(params);
+  const grupo = gruposMock.find((g: Grupo) => g.id === grupoId) ?? gruposMock[0]!;
 
   return (
     <DashboardContentShell
@@ -25,8 +23,9 @@ export default function IntegrantesPage({ params }: Props) {
       unirConTabs
     >
       <IntegrantesGrid
-        alumnos={alumnosMock.filter((a: Alumno) => a.grupoId === grupo.id)}
-        onAgregarAlumno={handleAgregarAlumno}
+        alumnos={alumnosMock.filter((a: Alumno) => a.grupoId === grupoId)}
+        grupoId={grupoId}
+        colorGrupo={grupo.color}
       />
     </DashboardContentShell>
   );

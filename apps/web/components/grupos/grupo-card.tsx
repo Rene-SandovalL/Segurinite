@@ -1,11 +1,5 @@
-import { type Grupo, type ColorGrupo } from "../../types/grupo";
-
-const mapaColores: Record<ColorGrupo, string> = {
-  morado:         "bg-[#5c5ca8]",
-  naranja:        "bg-[#e8692a]",
-  verde:          "bg-[#3a8a3a]",
-  "verde-oscuro": "bg-[#2d5a5a]",
-};
+import { type Grupo } from "../../types/grupo";
+import { coloresGrupo } from "../../lib/colores-grupo";
 
 interface GrupoCardProps {
   grupo: Grupo;
@@ -29,7 +23,7 @@ export function GrupoCard({ grupo, activo }: GrupoCardProps) {
         className={`
           w-19 h-full flex items-center justify-center
           text-white font-medium text-[clamp(1.5rem,2vw,2.1rem)] leading-none shrink-0
-          ${mapaColores[grupo.color]}
+          ${coloresGrupo[grupo.color].bg}
         `}
       >
         G
