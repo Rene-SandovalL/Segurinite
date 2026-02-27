@@ -15,7 +15,7 @@ const tabs: { id: TabActiva; label: string }[] = [
 
 export function TabNavigation({ grupoId, tabActiva }: TabNavigationProps) {
   return (
-    <div className="flex gap-0.5 items-end px-1">
+    <div className="flex gap-0 items-end px-0">
       {tabs.map((tab) => {
         const esActiva = tabActiva === tab.id;
         return (

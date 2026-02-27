@@ -14,20 +14,21 @@ export function DashboardContentShell({
 	children,
 	unirConTabs = true,
 }: DashboardContentShellProps) {
-	const panelRadius = unirConTabs ? "0 22px 22px 22px" : "22px";
+	void unirConTabs;
+	const panelRadius = "0 22px 22px 22px";
 
 	return (
 		<div className="h-full flex flex-col bg-transparent">
 			<GrupoDetailHeader titulo={titulo} />
 
-			<div className="flex-1 min-h-0" style={{ padding: "0 28px 24px" }}>
+			<div className="flex-1 min-h-0" style={{ padding: "30px 25px 24px" }}>
 				<div className="h-full flex flex-col">
-					<div style={{ marginLeft: "8px" }}>{tabs}</div>
+					<div>{tabs}</div>
 
 					<section
 						className="flex-1 min-h-0 overflow-y-auto"
 						style={{
-							background: "#f2f2f3",
+							background: "#f2f2f4",
 							border: "1px solid rgba(156, 163, 175, 0.6)",
 							borderRadius: panelRadius,
 							boxShadow: "0 14px 28px rgba(0, 0, 0, 0.22)",

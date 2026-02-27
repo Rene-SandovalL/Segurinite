@@ -16,15 +16,13 @@ export function AlumnoCard({ alumno }: AlumnoCardProps) {
         cursor-pointer transition-all h-16.5 bg-white
       `}
     >
-      {/* Avatar con iniciales */}
       <div className="w-19.5 h-full shrink-0 bg-[#5c5ca8] flex items-center justify-center">
         <span className="text-white text-[clamp(1.35rem,1.7vw,2rem)] leading-none font-medium">{alumno.iniciales}</span>
       </div>
 
-      {/* Nombre completo — fondo rojo/coral si estado es "peligro" */}
       <div
         className={`
-          flex-1 h-full flex items-center px-7 min-w-0
+          flex-1 h-full flex items-center pl-12 pr-7 min-w-0
           ${esPeligro
             ? "bg-[#d86f6f] text-white"
             : esAlerta
