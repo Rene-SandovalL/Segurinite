@@ -11,30 +11,29 @@ export function AlumnoCard({ alumno }: AlumnoCardProps) {
   return (
     <div
       className={`
-        flex items-center rounded-2xl overflow-hidden shadow-sm
-        border border-gray-200 cursor-pointer
-        hover:shadow-md transition-all h-[56px]
-        ${esPeligro ? "" : "bg-white"}
+        flex items-stretch rounded-[18px] overflow-hidden
+        shadow-[0_2px_6px_rgba(0,0,0,0.14)] border border-gray-300/70
+        cursor-pointer transition-all h-16.5 bg-white
       `}
     >
       {/* Avatar con iniciales */}
-      <div className="w-[52px] h-full shrink-0 bg-[#5c5ca8] flex items-center justify-center">
-        <span className="text-white text-sm font-bold">{alumno.iniciales}</span>
+      <div className="w-19.5 h-full shrink-0 bg-[#5c5ca8] flex items-center justify-center">
+        <span className="text-white text-[clamp(1.35rem,1.7vw,2rem)] leading-none font-medium">{alumno.iniciales}</span>
       </div>
 
-      {/* Nombre completo en mayúsculas */}
+      {/* Nombre completo — fondo rojo/coral si estado es "peligro" */}
       <div
         className={`
-          flex-1 h-full flex items-center px-4 min-w-0
+          flex-1 h-full flex items-center px-7 min-w-0
           ${esPeligro
-            ? "bg-[#d97070] text-white"
+            ? "bg-[#d86f6f] text-white"
             : esAlerta
               ? "bg-amber-200 text-amber-900"
-              : "bg-white text-gray-700"
+              : "text-gray-600"
           }
         `}
       >
-        <span className="text-[13px] font-semibold uppercase leading-tight truncate">
+        <span className="text-[clamp(0.8rem,0.95vw,1.05rem)] font-semibold uppercase leading-tight truncate">
           {alumno.nombre} {alumno.apellido}
         </span>
       </div>

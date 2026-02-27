@@ -22,7 +22,7 @@ const tabs: { id: TabActiva; label: string }[] = [
  */
 export function TabNavegacion({ tabActiva, onCambiarTab }: TabNavegacionProps) {
   return (
-    <div className="flex items-end">
+    <div className="flex gap-0.5 items-end px-1">
       {tabs.map((tab) => {
         const esActiva = tabActiva === tab.id;
 
@@ -31,10 +31,10 @@ export function TabNavegacion({ tabActiva, onCambiarTab }: TabNavegacionProps) {
             key={tab.id}
             onClick={() => onCambiarTab(tab.id)}
             className={`
-              px-8 py-3 text-sm font-semibold transition-all relative
+              min-w-45 h-14 px-8 text-[clamp(0.95rem,1.2vw,1.35rem)] leading-none font-medium transition-all rounded-t-[18px]
               ${esActiva
-                ? "bg-white text-gray-800 rounded-t-2xl z-10"
-                : "bg-gray-400/60 text-gray-600 hover:bg-gray-300/80 rounded-t-2xl ml-1"
+                ? "bg-[#efefef] text-gray-700 shadow-sm relative z-10"
+                : "bg-[#d1d1d4] text-gray-500 hover:bg-[#c6c7cb]"
               }
             `}
           >

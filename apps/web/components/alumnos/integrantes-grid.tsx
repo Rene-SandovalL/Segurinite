@@ -10,9 +10,9 @@ interface IntegrantesGridProps {
 
 export function IntegrantesGrid({ alumnos, onAgregarAlumno }: IntegrantesGridProps) {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-11 px-3">
       {/* Grid de alumnos — 3 columnas en desktop */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-x-12 gap-y-8">
         {alumnos.map((alumno) => (
           <AlumnoCard key={alumno.id} alumno={alumno} />
         ))}
@@ -21,7 +21,7 @@ export function IntegrantesGrid({ alumnos, onAgregarAlumno }: IntegrantesGridPro
       {/* Botón para agregar nuevo alumno */}
       <button
         onClick={onAgregarAlumno}
-        className="w-full py-4 rounded-2xl bg-gray-200 hover:bg-gray-300 text-gray-400 text-2xl font-light transition-all"
+        className="w-full h-14 rounded-2xl bg-[#d0d1d6] hover:bg-[#c4c6cb] text-gray-600 text-4xl leading-none font-light transition-all"
         aria-label="Agregar nuevo alumno"
       >
         +

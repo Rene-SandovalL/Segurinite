@@ -16,19 +16,19 @@ export function GrupoCard({ grupo, activo }: GrupoCardProps) {
   return (
     <div
       className={`
-        w-full flex items-center gap-4 px-3 py-3.5 rounded-2xl transition-all cursor-pointer
-        shadow-sm border
+        w-full h-21 flex items-stretch rounded-2xl transition-all cursor-pointer
+        shadow-[0_2px_6px_rgba(0,0,0,0.12)] border overflow-hidden
         ${activo
-          ? "bg-gray-50 shadow-md border-gray-300"
-          : "bg-white border-gray-200 hover:bg-gray-50 hover:shadow-md"
+          ? "bg-[#f5f5f6] border-gray-300"
+          : "bg-[#f4f4f5] border-gray-300/80 hover:bg-[#f8f8f8]"
         }
       `}
     >
-      {/* Avatar cuadrado grande con color del grupo */}
+      {/* Bloque de color del grupo */}
       <div
         className={`
-          w-14 h-14 rounded-xl flex items-center justify-center
-          text-white font-bold text-xl shrink-0
+          w-19 h-full flex items-center justify-center
+          text-white font-medium text-[clamp(1.5rem,2vw,2.1rem)] leading-none shrink-0
           ${mapaColores[grupo.color]}
         `}
       >
@@ -36,19 +36,19 @@ export function GrupoCard({ grupo, activo }: GrupoCardProps) {
       </div>
 
       {/* Nombre + indicadores */}
-      <div className="flex flex-col items-start gap-2 min-w-0">
+      <div className="flex-1 flex flex-col justify-center px-3 min-w-0">
         {/* Nombre del grupo + línea decorativa */}
-        <div className="flex items-center gap-2 w-full">
-          <span className="text-sm font-bold text-gray-700 whitespace-nowrap">
+        <div className="flex items-center gap-2.5 w-full">
+          <span className="text-[clamp(1rem,1.35vw,1.7rem)] leading-none font-medium text-gray-700 whitespace-nowrap">
             {grupo.nombre}
           </span>
-          <div className="flex-1 border-t border-gray-300" />
+          <div className="flex-1 border-t border-gray-400/70" />
         </div>
 
         {/* Puntos indicadores de alumnos */}
-        <div className="flex gap-1.5 flex-wrap">
-          {Array.from({ length: Math.min(grupo.totalAlumnos, 6) }).map((_, i) => (
-            <span key={i} className="w-3 h-3 rounded-full bg-gray-300 inline-block" />
+        <div className="flex gap-1.5 mt-2">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <span key={i} className="w-3 h-3 rounded-full bg-[#c8cbd0] inline-block" />
           ))}
         </div>
       </div>
