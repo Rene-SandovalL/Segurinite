@@ -1,10 +1,10 @@
-import GroupsView from "@/components/groups/GroupsView";
+import { redirect } from "next/navigation";
+import { GRUPOS_MOCK } from "@/lib/mock/grupos";
 
-export const metadata = {
-  title: "Grupos — Segurinite",
-};
-
-/** Página /groups — renderiza la vista de grupos con mock data */
-export default function GroupsPage() {
-  return <GroupsView />;
+/**
+ * /groups — Redirige automáticamente al primer grupo del listado.
+ */
+export default function GruposPage() {
+  const primerGrupo = GRUPOS_MOCK[0];
+  redirect(`/groups/${primerGrupo!.id}`);
 }
