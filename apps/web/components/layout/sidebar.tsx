@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GRUPOS_MOCK } from "@/lib/mock/grupos";
 import { SidebarGrupoItem } from "./sidebar-grupo-item";
@@ -70,17 +71,19 @@ export function Sidebar() {
           ))}
 
           {/* Botón + agregar grupo */}
-          <button
-            className="w-full flex items-center justify-center rounded-[25px] bg-[#D9D9D9] text-[#3A3A3A] font-normal border-none cursor-pointer focus:outline-none"
+          <Link
+            href="/groups/nuevo"
+            className="w-full flex items-center justify-center rounded-[25px] text-[#3A3A3A] font-normal no-underline"
             style={{
               height: 64,
               fontSize: "clamp(24px, 2.5vw, 36px)",
               boxShadow: "0 4px 4px 0 rgba(0,0,0,0.25)",
+              background: grupoIdActivo === "nuevo" ? "#B8B8B8" : "#D9D9D9",
             }}
-            aria-label="Agregar grupo"
+            aria-label="Crear nuevo grupo"
           >
             +
-          </button>
+          </Link>
         </div>
       </div>
     </aside>

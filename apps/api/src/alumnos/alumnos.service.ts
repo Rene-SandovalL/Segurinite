@@ -1,36 +1,42 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Alumno } from './entities/alumno.entity';
+import { Grupo } from '../grupos/entities/grupo.entity';
 import { CreateAlumnoDto } from './dto/create-alumno.dto';
 import { UpdateAlumnoDto } from './dto/update-alumno.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Alumno } from './entities/alumno.entity';
-import { Repository } from 'typeorm/browser/repository/Repository.js';
-import { Grupo } from '../grupos/entities/grupo.entity';
 
 @Injectable()
 export class AlumnosService {
   constructor(
     @InjectRepository(Alumno)
     private readonly alumnoRepository: Repository<Alumno>,
+
     @InjectRepository(Grupo)
     private readonly grupoRepository: Repository<Grupo>,
   ) {}
+
   create(createAlumnoDto: CreateAlumnoDto) {
-    return 'This action adds a new alumno';
+    const alumno = this.alumnoRepository.create(createAlumnoDto);
+    return this.alumnoRepository.save(alumno);
   }
 
   findAll() {
-    return `This action returns all alumnos`;
+    return this.alumnoRepository.find({ relations: ['grupo'] });
   }
 
   findOne(id: number) {
-    return `This action returns a #${id} alumno`;
+    return this.alumnoRepository.findOne({
+      where: { id },
+      relations: ['grupo'],
+    });
   }
 
   update(id: number, updateAlumnoDto: UpdateAlumnoDto) {
-    return `This action updates a #${id} alumno`;
+    return this.alumnoRepository.update(id, updateAlumnoDto);
   }
 
   remove(id: number) {
-    return `This action removes a #${id} alumno`;
+    return this.alumnoRepository.delete(id);
   }
 }
