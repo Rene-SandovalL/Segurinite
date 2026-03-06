@@ -1,0 +1,68 @@
+import type { DocenteGrupo } from "@/types/usuario";
+
+export const DOCENTES_MOCK: DocenteGrupo[] = [
+  {
+    id: "d1",
+    nombre: "Raymundo",
+    apellido: "Medrano",
+    rol: "docente",
+    grupoId: "1",
+    iniciales: "RM",
+    nombreCompleto: "Raymundo Medrano",
+    nombrePlataforma: "Rayblox Gamer",
+    gatewayEstado: "Activo",
+    fechaNacimiento: "12/03/1985",
+    correo: "r.medrano@segurinite.edu",
+    telefono: "+52 55 1234 5678",
+    observaciones: "Sin observaciones",
+  },
+  {
+    id: "d2",
+    nombre: "Laura",
+    apellido: "Cifuentes",
+    rol: "docente",
+    grupoId: "2",
+    iniciales: "LC",
+    nombreCompleto: "Laura Cifuentes",
+    nombrePlataforma: "LauraC",
+    gatewayEstado: "Inactivo",
+    fechaNacimiento: "07/11/1990",
+    correo: "l.cifuentes@segurinite.edu",
+    telefono: "+52 55 8765 4321",
+    observaciones: "En periodo de prueba",
+  },
+  {
+    id: "d3",
+    nombre: "Carlos",
+    apellido: "Dominguez",
+    rol: "docente",
+    grupoId: "3",
+    iniciales: "CD",
+    nombreCompleto: "Carlos Dominguez",
+    nombrePlataforma: "CarlD",
+    gatewayEstado: "Activo",
+    fechaNacimiento: "22/06/1978",
+    correo: "c.dominguez@segurinite.edu",
+    telefono: "+52 55 2222 3333",
+    observaciones: "Sin observaciones",
+  },
+  {
+    id: "d4",
+    nombre: "María",
+    apellido: "López",
+    rol: "docente",
+    grupoId: "4",
+    iniciales: "ML",
+    nombreCompleto: "María López",
+    nombrePlataforma: "MariaL",
+    gatewayEstado: "Activo",
+    fechaNacimiento: "14/09/1983",
+    correo: "m.lopez@segurinite.edu",
+    telefono: "+52 55 4444 5555",
+    observaciones: "Sin observaciones",
+  },
+];
+
+export function getDocenteByGrupo(grupoId: string): DocenteGrupo | undefined {
+  return DOCENTES_MOCK.find((d) => d.grupoId === grupoId);
+}

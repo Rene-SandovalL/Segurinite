@@ -20,6 +20,6 @@
 html, body {
   height: 100%;
   overflow: hidden;
-  font-family: "Segoe UI", "Inter", "Roboto", Arial, sans-serif;
+  font-family: var(--font-lato), "Lato", "Segoe UI", "Inter", "Roboto", Arial, sans-serif;
   background: var(--color-fondo-app);
 }
