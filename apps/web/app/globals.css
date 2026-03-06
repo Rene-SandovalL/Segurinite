@@ -11,10 +11,12 @@
   --color-texto-secundario: #6b7280;
 }
 
-* {
-  box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+@layer base {
+  * {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+  }
 }
 
 html, body {
@@ -22,4 +24,9 @@ html, body {
   overflow: hidden;
   font-family: var(--font-lato), "Lato", "Segoe UI", "Inter", "Roboto", Arial, sans-serif;
   background: var(--color-fondo-app);
+}
+
+/* Ocultar scrollbar nativo en contenedores con scroll personalizado */
+.sin-scrollbar::-webkit-scrollbar {
+  display: none;
 }

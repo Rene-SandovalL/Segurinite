@@ -51,11 +51,16 @@ function TarjetaOpcion({ titulo, colorCabecera, icono, onClick }: TarjetaOpcionP
   );
 }
 
+interface AñadirPulseraProps {
+  onNuevoRegistro?: () => void;
+  onRegistroExistente?: () => void;
+}
+
 /**
- * Panel para añadir una pulsera a un alumno.
+ * Pantalla 1 del flujo de añadir pulsera.
  * Muestra dos opciones: "Registro existente" y "Nuevo registro".
  */
-export function AñadirPulsera() {
+export function AñadirPulsera({ onNuevoRegistro, onRegistroExistente }: AñadirPulseraProps = {}) {
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
       {/* ── Botón atrás ── */}
@@ -81,11 +86,13 @@ export function AñadirPulsera() {
           titulo="REGISTRO EXISTENTE"
           colorCabecera="#6AE89D"
           icono="/icons/registro_existente_icon.png"
+          onClick={onRegistroExistente}
         />
         <TarjetaOpcion
           titulo="NUEVO REGISTRO"
           colorCabecera="#00BCD4"
           icono="/icons/nuevo_registro_icon.png"
+          onClick={onNuevoRegistro}
         />
       </div>
     </div>
