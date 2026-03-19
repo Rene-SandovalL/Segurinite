@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model alumno_contactos {
+  id               BigInt                @id @default(autoincrement()) @db.UnsignedBigInt
+  alumno_id        BigInt                @db.UnsignedBigInt
+  tipo             alumno_contactos_tipo
+  orden            Int?                  @db.UnsignedTinyInt
+  parentesco       String?               @db.VarChar(30)
+  nombre           String                @db.VarChar(120)
+  telefono         String                @db.VarChar(20)
+  fecha_nacimiento DateTime?             @db.Date
+  direccion        String?               @db.VarChar(255)
+  created_at       DateTime              @default(now()) @db.DateTime(0)
+  alumnos          alumnos               @relation(fields: [alumno_id], references: [id], onDelete: Cascade, map: "fk_contactos_alumno")
+
+  @@unique([alumno_id, tipo, orden], map: "uq_contacto_tutor_orden")
+  @@index([alumno_id], map: "idx_contactos_alumno_id")
+}
+
+model alumnos {
+  id               BigInt               @id @default(autoincrement()) @db.UnsignedBigInt
+  grupo_id         Int?                 @db.UnsignedInt
+  pulsera_id       BigInt?              @unique(map: "uq_alumnos_pulsera_id") @db.UnsignedBigInt
+  nombre           String               @db.VarChar(60)
+  apellido         String               @db.VarChar(60)
+  fecha_nacimiento DateTime             @db.Date
+  tipo_sangre      alumnos_tipo_sangre?
+  created_at       DateTime             @default(now()) @db.DateTime(0)
+  updated_at       DateTime             @default(now()) @db.DateTime(0)
+  alumno_contactos alumno_contactos[]
+  grupos           grupos?              @relation(fields: [grupo_id], references: [id], map: "fk_alumnos_grupo")
+  pulseras         pulseras?            @relation(fields: [pulsera_id], references: [id], map: "fk_alumnos_pulsera")
+
+  @@index([grupo_id], map: "idx_alumnos_grupo_id")
+}
+
+model grupos {
+  id         Int          @id @default(autoincrement()) @db.UnsignedInt
+  nombre     String       @unique(map: "uq_grupos_nombre") @db.VarChar(60)
+  color      grupos_color
+  created_at DateTime     @default(now()) @db.DateTime(0)
+  alumnos    alumnos[]
+}
+
+model pulseras {
+  id           BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  uuid         String          @unique(map: "uq_pulseras_uuid") @db.VarChar(64)
+  estado       pulseras_estado @default(DISPONIBLE)
+  mac_address  String?         @unique(map: "uq_pulseras_mac") @db.VarChar(17)
+  bateria      Int?            @db.UnsignedTinyInt
+  last_seen_at DateTime?       @db.DateTime(0)
+  created_at   DateTime        @default(now()) @db.DateTime(0)
+  updated_at   DateTime        @default(now()) @db.DateTime(0)
+  alumnos      alumnos?
+}
+
+enum pulseras_estado {
+  DISPONIBLE
+  CONECTADA
+  REGISTRADA
+  ASIGNADA
+}
+
+enum alumno_contactos_tipo {
+  TUTOR
+  EMERGENCIA
+}
+
+enum grupos_color {
+  blue
+  coral
+  green
+  grey
+}
+
+enum alumnos_tipo_sangre {
+  A_POS  @map("A+")
+  A_NEG  @map("A-")
+  B_POS  @map("B+")
+  B_NEG  @map("B-")
+  AB_POS @map("AB+")
+  AB_NEG @map("AB-")
+  O_POS  @map("O+")
+  O_NEG  @map("O-")
+}
