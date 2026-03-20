@@ -6,5 +6,6 @@ import { AlumnosController } from './alumnos.controller';
   imports: [],
   controllers: [AlumnosController],
   providers: [AlumnosService],
+  exports: [AlumnosService],
 })
 export class AlumnosModule {}

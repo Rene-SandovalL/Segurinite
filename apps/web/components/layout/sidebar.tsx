@@ -2,14 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { GRUPOS_MOCK } from "@/lib/mock/grupos";
+import type { GrupoMock } from "@/lib/mock/grupos";
 import { SidebarGrupoItem } from "./sidebar-grupo-item";
+
+interface SidebarProps {
+  grupos: GrupoMock[];
+}
 
 /**
  * Sidebar izquierdo del dashboard.
  * Detecta el grupo activo con usePathname() y usa Links internamente.
  */
-export function Sidebar() {
+export function Sidebar({ grupos }: SidebarProps) {
   const pathname = usePathname();
   // La ruta es /groups/[grupoId]/... — el grupoId está en el segmento índice 2
   const segmentos = pathname.split("/");
@@ -62,7 +66,7 @@ export function Sidebar() {
           className="flex flex-col"
           style={{ gap: 24, margin: "32px 28px 24px 28px" }}
         >
-          {GRUPOS_MOCK.map((grupo) => (
+          {grupos.map((grupo) => (
             <SidebarGrupoItem
               key={grupo.id}
               grupo={grupo}

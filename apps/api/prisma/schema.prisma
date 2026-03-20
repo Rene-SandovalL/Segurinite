@@ -30,8 +30,9 @@ model alumnos {
   pulsera_id       BigInt?              @unique(map: "uq_alumnos_pulsera_id") @db.UnsignedBigInt
   nombre           String               @db.VarChar(60)
   apellido         String               @db.VarChar(60)
-  fecha_nacimiento DateTime             @db.Date
+  fecha_nacimiento DateTime?            @db.Date
   tipo_sangre      alumnos_tipo_sangre?
+  estado           alumnos_estado       @default(normal)
   created_at       DateTime             @default(now()) @db.DateTime(0)
   updated_at       DateTime             @default(now()) @db.DateTime(0)
   alumno_contactos alumno_contactos[]
@@ -89,4 +90,10 @@ enum alumnos_tipo_sangre {
   AB_NEG @map("AB-")
   O_POS  @map("O+")
   O_NEG  @map("O-")
+}
+
+enum alumnos_estado {
+  normal
+  alerta
+  peligro
 }

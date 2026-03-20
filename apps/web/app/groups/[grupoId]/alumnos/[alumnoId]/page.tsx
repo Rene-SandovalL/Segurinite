@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
-import { GRUPOS_MOCK } from "@/lib/mock/grupos";
-import { getAlumnosByGrupo } from "@/lib/mock/alumnos";
 import { GrupoHeader } from "@/components/grupos/grupo-header";
 import { AlumnoDetalle } from "@/components/alumnos/alumno-detalle";
+import { getAlumnoById, getGrupoById } from "@/lib/api/segurinite";
 
 interface Props {
   params: Promise<{ grupoId: string; alumnoId: string }>;
@@ -15,11 +14,12 @@ interface Props {
 export default async function AlumnoDetallePage({ params }: Props) {
   const { grupoId, alumnoId } = await params;
 
-  const grupo = GRUPOS_MOCK.find((g) => g.id === grupoId);
-  if (!grupo) notFound();
+  const [grupo, alumno] = await Promise.all([
+    getGrupoById(grupoId),
+    getAlumnoById(grupoId, alumnoId),
+  ]);
 
-  const alumnos = getAlumnosByGrupo(grupoId);
-  const alumno = alumnos.find((a) => a.id === alumnoId);
+  if (!grupo) notFound();
   if (!alumno) notFound();
 
   const tituloHeader = `${grupo.nombre} / ${alumno.nombreCompleto ?? `${alumno.nombre} ${alumno.apellido}`}`;

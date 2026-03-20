@@ -1,42 +1,28 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
 import { GruposService } from './grupos.service';
-import { CreateGrupoDto } from './dto/create-grupo.dto';
-import { UpdateGrupoDto } from './dto/update-grupo.dto';
+import { AlumnosService } from '../alumnos/alumnos.service';
 
 @Controller('grupos')
 export class GruposController {
-  constructor(private readonly gruposService: GruposService) {}
-
-  @Post()
-  create(@Body() createGrupoDto: CreateGrupoDto) {
-    return this.gruposService.create(createGrupoDto);
-  }
+  constructor(
+    private readonly gruposService: GruposService,
+    private readonly alumnosService: AlumnosService,
+  ) {}
 
   @Get()
   findAll() {
     return this.gruposService.findAll();
   }
 
+  @Get(':grupoId/alumnos')
+  findAlumnosByGrupoId(
+    @Param('grupoId', ParseIntPipe) grupoId: number,
+  ): Promise<unknown[]> {
+    return this.alumnosService.findByGrupoId(grupoId);
+  }
+
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.gruposService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateGrupoDto: UpdateGrupoDto) {
-    return this.gruposService.update(+id, updateGrupoDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.gruposService.remove(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.gruposService.findOne(id);
   }
 }

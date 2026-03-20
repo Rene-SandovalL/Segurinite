@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import { GRUPOS_MOCK, COLOR_HEX } from "@/lib/mock/grupos";
-import { getAlumnosByGrupo } from "@/lib/mock/alumnos";
+import { COLOR_HEX } from "@/lib/mock/grupos";
 import { GrupoHeader } from "@/components/grupos/grupo-header";
 import { TabBar } from "@/components/grupos/tab-bar";
 import { IntegrantesLista } from "@/components/alumnos/integrantes-lista";
+import { getAlumnosByGrupo, getGrupoById } from "@/lib/api/segurinite";
 
 interface Props {
   params: Promise<{ grupoId: string }>;
@@ -16,10 +16,10 @@ interface Props {
 export default async function IntegrantesPage({ params }: Props) {
   const { grupoId } = await params;
 
-  const grupo = GRUPOS_MOCK.find((g) => g.id === grupoId);
+  const grupo = await getGrupoById(grupoId);
   if (!grupo) notFound();
 
-  const alumnos = getAlumnosByGrupo(grupoId);
+  const alumnos = await getAlumnosByGrupo(grupoId);
   const colorFranja = COLOR_HEX[grupo.color];
 
   return (

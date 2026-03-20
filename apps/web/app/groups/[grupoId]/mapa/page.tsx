@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
-import { GRUPOS_MOCK } from "@/lib/mock/grupos";
 import { GrupoHeader } from "@/components/grupos/grupo-header";
 import { TabBar } from "@/components/grupos/tab-bar";
+import { getGrupoById } from "@/lib/api/segurinite";
 
 interface Props {
   params: Promise<{ grupoId: string }>;
@@ -15,7 +15,7 @@ interface Props {
 export default async function MapaPage({ params }: Props) {
   const { grupoId } = await params;
 
-  const grupo = GRUPOS_MOCK.find((g) => g.id === grupoId);
+  const grupo = await getGrupoById(grupoId);
   if (!grupo) notFound();
 
   return (

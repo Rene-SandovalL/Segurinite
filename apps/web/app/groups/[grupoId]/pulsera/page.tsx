@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { GRUPOS_MOCK } from "@/lib/mock/grupos";
 import { FlujoPulsera } from "@/components/grupos/flujo-pulsera";
+import { getGrupoById } from "@/lib/api/segurinite";
 
 interface Props {
   params: Promise<{ grupoId: string }>;
@@ -14,7 +14,7 @@ interface Props {
 export default async function AñadirPulseraPage({ params }: Props) {
   const { grupoId } = await params;
 
-  const grupo = GRUPOS_MOCK.find((g) => g.id === grupoId);
+  const grupo = await getGrupoById(grupoId);
   if (!grupo) notFound();
 
   return <FlujoPulsera grupoId={grupoId} />;

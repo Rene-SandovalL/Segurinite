@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import { GRUPOS_MOCK } from "@/lib/mock/grupos";
 import { getDocenteByGrupo } from "@/lib/mock/docentes";
 import { GrupoHeader } from "@/components/grupos/grupo-header";
 import { TabBar } from "@/components/grupos/tab-bar";
 import { DocentePerfil } from "@/components/docente/docente-perfil";
+import { getGrupoById } from "@/lib/api/segurinite";
 
 interface Props {
   params: Promise<{ grupoId: string }>;
@@ -16,7 +16,7 @@ interface Props {
 export default async function DocentePage({ params }: Props) {
   const { grupoId } = await params;
 
-  const grupo = GRUPOS_MOCK.find((g) => g.id === grupoId);
+  const grupo = await getGrupoById(grupoId);
   if (!grupo) notFound();
 
   const docente = getDocenteByGrupo(grupoId);
