@@ -8,6 +8,7 @@ import { ModalConfirmacionRegistro } from "./modal-confirmacion-registro";
 import { PulserasScanner } from "@/components/alumnos/pulseras-scanner";
 import { FormularioRegistro } from "@/components/alumnos/formulario-registro";
 import { ToastNotificacion, type ToastData } from "@/components/ui/toast";
+import type { CreateAlumnoPayload } from "@/lib/api/segurinite";
 
 /** Pantallas disponibles dentro del flujo de añadir pulsera */
 type PantallaFlujo =
@@ -37,7 +38,9 @@ export function FlujoPulsera({ grupoId }: FlujoPulseraProps) {
     setPantalla({ nombre: "nuevo-registro", pulseraId });
   };
 
-  const handleRegistrar = () => {
+  const handleRegistrar = (payload: Omit<CreateAlumnoPayload, "pulseraId">) => {
+    void payload;
+
     if (pantalla.nombre !== "nuevo-registro") return;
     // TODO: llamar a la API y obtener el alumnoId real
     const nuevoAlumnoId = "nuevo";

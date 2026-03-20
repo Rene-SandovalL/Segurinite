@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { COLOR_HEX } from "@/lib/mock/grupos";
 import { GrupoHeader } from "@/components/grupos/grupo-header";
 import { TabBar } from "@/components/grupos/tab-bar";
 import { IntegrantesLista } from "@/components/alumnos/integrantes-lista";
@@ -20,7 +19,7 @@ export default async function IntegrantesPage({ params }: Props) {
   if (!grupo) notFound();
 
   const alumnos = await getAlumnosByGrupo(grupoId);
-  const colorFranja = COLOR_HEX[grupo.color];
+  const colorFranja = grupo.color;
 
   return (
     <>

@@ -1,10 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
-  PULSERAS_CONECTADAS,
-  PULSERAS_DISPONIBLES,
-  type PulseraMock,
-} from "@/lib/mock/pulseras";
+  getPulserasConectadas,
+  type PulseraConectada,
+} from "@/lib/api/segurinite";
 
 /** Ícono de Bluetooth (SVG extraído del Figma) */
 function IconoBluetooth() {
@@ -22,14 +22,14 @@ function IconoBluetooth() {
 }
 
 interface ItemPulseraProps {
-  pulsera: PulseraMock;
+  pulsera: PulseraConectada;
   onSeleccionar: (id: string) => void;
 }
 
 /** Ítem individual de pulsera: nombre + estado + ícono Bluetooth */
 function ItemPulsera({ pulsera, onSeleccionar }: ItemPulseraProps) {
   const etiquetaEstado =
-    pulsera.estado === "conectado" ? "Conectado" : "Disponible";
+    pulsera.estado === "CONECTADA" ? "Conectada" : pulsera.estado;
 
   return (
     <button
@@ -45,7 +45,7 @@ function ItemPulsera({ pulsera, onSeleccionar }: ItemPulseraProps) {
       {/* Nombre y estado */}
       <div className="flex flex-col items-start">
         <span className="font-normal text-[#3A3A3A] leading-tight" style={{ fontSize: 20 }}>
-          {pulsera.nombre}
+          {pulsera.identificador}
         </span>
         <span className="font-normal text-[#AAA] leading-none" style={{ fontSize: 14 }}>
           {etiquetaEstado}
@@ -60,12 +60,18 @@ function ItemPulsera({ pulsera, onSeleccionar }: ItemPulseraProps) {
 
 interface SeccionPulserasProps {
   titulo: string;
-  pulseras: PulseraMock[];
+  pulseras: PulseraConectada[];
   onSeleccionar: (id: string) => void;
+  vacioTexto?: string;
 }
 
 /** Sección con etiqueta + panel gris + grid de pulseras */
-function SeccionPulseras({ titulo, pulseras, onSeleccionar }: SeccionPulserasProps) {
+function SeccionPulseras({
+  titulo,
+  pulseras,
+  onSeleccionar,
+  vacioTexto,
+}: SeccionPulserasProps) {
   return (
     <div className="flex flex-col gap-2">
       <span className="font-normal text-[#3A3A3A]" style={{ fontSize: "clamp(20px, 2.4vw, 32px)" }}>
@@ -78,7 +84,7 @@ function SeccionPulseras({ titulo, pulseras, onSeleccionar }: SeccionPulserasPro
       >
         {pulseras.length === 0 ? (
           <p className="text-[#8A8A8A] text-center py-4" style={{ fontSize: 16 }}>
-            No hay pulseras {titulo.toLowerCase()} en este momento.
+            {vacioTexto ?? `No hay pulseras ${titulo.toLowerCase()} en este momento.`}
           </p>
         ) : (
           <div
@@ -109,6 +115,47 @@ interface PulserasScannerProps {
  * Al seleccionar una pulsera avanza a la Pantalla 3 (Formulario).
  */
 export function PulserasScanner({ onVolver, onSeleccionarPulsera }: PulserasScannerProps) {
+  const [pulserasConectadas, setPulserasConectadas] = useState<PulseraConectada[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [errorCarga, setErrorCarga] = useState<string | null>(null);
+
+  useEffect(() => {
+    let activa = true;
+
+    const cargarPulseras = async () => {
+      setCargando(true);
+      setErrorCarga(null);
+
+      try {
+        const resultado = await getPulserasConectadas();
+
+        if (!activa) {
+          return;
+        }
+
+        setPulserasConectadas(resultado);
+      } catch {
+        if (!activa) {
+          return;
+        }
+
+        setErrorCarga("No se pudieron cargar las pulseras conectadas.");
+      } finally {
+        if (activa) {
+          setCargando(false);
+        }
+      }
+    };
+
+    void cargarPulseras();
+
+    return () => {
+      activa = false;
+    };
+  }, []);
+
+  const pulserasDisponibles: PulseraConectada[] = [];
+
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
       {/* ── Botón atrás ── */}
@@ -133,16 +180,30 @@ export function PulserasScanner({ onVolver, onSeleccionarPulsera }: PulserasScan
         className="flex-1 overflow-y-auto flex flex-col"
         style={{ padding: "clamp(16px, 2vw, 28px) clamp(20px, 3vw, 48px) clamp(20px, 3vw, 48px)", gap: "clamp(20px, 2.5vw, 36px)" }}
       >
+        {cargando && (
+          <div className="text-[#8A8A8A]" style={{ fontSize: 18 }}>
+            Cargando pulseras conectadas...
+          </div>
+        )}
+
+        {errorCarga && (
+          <div className="text-[#E66363]" style={{ fontSize: 18 }}>
+            {errorCarga}
+          </div>
+        )}
+
         <SeccionPulseras
-          titulo="Conexiónes"
-          pulseras={PULSERAS_CONECTADAS}
+          titulo="Conexiones"
+          pulseras={pulserasConectadas}
           onSeleccionar={onSeleccionarPulsera}
+          vacioTexto="No hay pulseras conectadas y sin registrar en este momento."
         />
 
         <SeccionPulseras
           titulo="Disponibles"
-          pulseras={PULSERAS_DISPONIBLES}
+          pulseras={pulserasDisponibles}
           onSeleccionar={onSeleccionarPulsera}
+          vacioTexto="Sin resultados por ahora."
         />
       </div>
     </div>

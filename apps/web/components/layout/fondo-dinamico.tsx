@@ -1,7 +1,11 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { COLOR_HEX, type GrupoMock } from "@/lib/mock/grupos";
+import {
+  COLOR_FONDO_PREDETERMINADO,
+  resolverColorHex,
+  type GrupoMock,
+} from "@/lib/mock/grupos";
 
 interface FondoDinamicoProps {
   children: React.ReactNode;
@@ -19,7 +23,9 @@ export function FondoDinamico({ children, grupos }: FondoDinamicoProps) {
   const grupoId = segmentos[2] ?? "";
 
   const grupo = grupos.find((g) => g.id === grupoId);
-  const colorFondo = grupo ? COLOR_HEX[grupo.color] : COLOR_HEX.blue;
+  const colorFondo = grupo
+    ? resolverColorHex(grupo.color)
+    : COLOR_FONDO_PREDETERMINADO;
 
   return (
     <main className="relative flex-1 h-full overflow-hidden flex flex-col">

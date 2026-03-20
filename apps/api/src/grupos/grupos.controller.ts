@@ -1,6 +1,14 @@
-import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+} from '@nestjs/common';
 import { GruposService } from './grupos.service';
 import { AlumnosService } from '../alumnos/alumnos.service';
+import { CreateGrupoDto } from './dto/create-grupo.dto';
 
 @Controller('grupos')
 export class GruposController {
@@ -12,6 +20,11 @@ export class GruposController {
   @Get()
   findAll() {
     return this.gruposService.findAll();
+  }
+
+  @Post()
+  create(@Body() createGrupoDto: CreateGrupoDto) {
+    return this.gruposService.create(createGrupoDto);
   }
 
   @Get(':grupoId/alumnos')

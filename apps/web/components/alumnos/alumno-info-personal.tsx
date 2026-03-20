@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import type { AlumnoMock } from "@/lib/mock/alumnos";
 import { BotonAtras } from "@/components/ui/boton-atras";
 import { CampoLectura } from "@/components/ui/campo-lectura";
@@ -17,6 +18,58 @@ interface AlumnoInfoPersonalProps {
  */
 export function AlumnoInfoPersonal({ alumno }: AlumnoInfoPersonalProps) {
   const contacto = alumno.contactosEmergencia?.[0];
+
+  const tutores =
+    alumno.tutores && alumno.tutores.length > 0
+      ? alumno.tutores.slice(0, 2)
+      : alumno.nombrePadre
+        ? [
+            {
+              nombre: alumno.nombrePadre,
+              telefono: alumno.telefonoPadre ?? "—",
+              direccion: alumno.direccion,
+            },
+          ]
+        : [];
+
+  const direccionesTutor: string[] = [];
+  const direccionesVistas = new Set<string>();
+
+  for (const tutor of tutores) {
+    const direccion = tutor.direccion?.trim();
+    if (!direccion) {
+      continue;
+    }
+
+    const key = direccion.toLowerCase();
+    if (direccionesVistas.has(key)) {
+      continue;
+    }
+
+    direccionesVistas.add(key);
+    direccionesTutor.push(direccion);
+  }
+
+  const direccionesAMostrar =
+    direccionesTutor.length > 0
+      ? direccionesTutor
+      : [alumno.direccion?.trim() || "—"];
+
+  const etiquetaTutor = (index: number, parentesco?: string) => {
+    const parentescoLimpio = parentesco?.trim();
+
+    if (parentescoLimpio) {
+      const parentescoNormalizado = parentescoLimpio.toLowerCase();
+      const articulo = parentescoNormalizado === "madre" ? "de la" : "del";
+      return `Nombre ${articulo} ${parentescoLimpio}`;
+    }
+
+    if (tutores.length > 1) {
+      return `Nombre del Tutor ${index + 1}`;
+    }
+
+    return "Nombre del Tutor";
+  };
 
   return (
     <div className="flex flex-col overflow-hidden" style={{ flex: "0 0 60%", background: "#FFFFFF" }}>
@@ -85,20 +138,40 @@ export function AlumnoInfoPersonal({ alumno }: AlumnoInfoPersonalProps) {
             span={3}
           />
 
-          {/* Dirección — ancho completo */}
-          <CampoLectura etiqueta="Direccion" valor={alumno.direccion ?? "—"} span={10} />
+          {/* Direccion(es) de tutor(es) */}
+          {direccionesAMostrar.map((direccion, index) => (
+            <CampoLectura
+              key={`direccion-${index}-${direccion}`}
+              etiqueta={
+                direccionesAMostrar.length > 1 ? `Direccion ${index + 1}` : "Direccion"
+              }
+              valor={direccion}
+              span={10}
+            />
+          ))}
 
-          {/* Nombre del padre (6) + Teléfono (4) */}
-          <CampoLectura
-            etiqueta="Nombre del Padre"
-            valor={alumno.nombrePadre ?? "—"}
-            span={6}
-          />
-          <CampoLectura
-            etiqueta="Num. Telefono"
-            valor={alumno.telefonoPadre ?? "—"}
-            span={4}
-          />
+          {/* Tutor(es): nombre + teléfono */}
+          {tutores.length > 0 ? (
+            tutores.map((tutor, index) => (
+              <Fragment key={`${tutor.nombre}-${index}`}>
+                <CampoLectura
+                  etiqueta={etiquetaTutor(index, tutor.parentesco)}
+                  valor={tutor.nombre || "—"}
+                  span={6}
+                />
+                <CampoLectura
+                  etiqueta="Num. Telefono"
+                  valor={tutor.telefono || "—"}
+                  span={4}
+                />
+              </Fragment>
+            ))
+          ) : (
+            <>
+              <CampoLectura etiqueta="Nombre del Tutor" valor="—" span={6} />
+              <CampoLectura etiqueta="Num. Telefono" valor="—" span={4} />
+            </>
+          )}
         </div>
 
         <div style={{ marginTop: 8 }}>

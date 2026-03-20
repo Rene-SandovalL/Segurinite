@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { GrupoMock } from "@/lib/mock/grupos";
-import { COLOR_HEX } from "@/lib/mock/grupos";
+import { resolverColorHex } from "@/lib/mock/grupos";
 
 interface SidebarGrupoItemProps {
   grupo: GrupoMock;
@@ -12,7 +12,7 @@ interface SidebarGrupoItemProps {
  * Usa <Link> de Next.js para navegar — el grupo activo se detecta en el padre.
  */
 export function SidebarGrupoItem({ grupo, activo }: SidebarGrupoItemProps) {
-  const colorFranja = COLOR_HEX[grupo.color];
+  const colorFranja = resolverColorHex(grupo.color);
 
   return (
     <Link

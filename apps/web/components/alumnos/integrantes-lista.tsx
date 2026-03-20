@@ -34,7 +34,7 @@ export function IntegrantesLista({ alumnos, grupoId, colorFranja }: IntegrantesL
           ))}
         </div>
 
-        {/* Botón agregar integrante — navega al panel de añadir pulsera */}
+        {/* Botón agregar integrante — navega al panel de añadir alumno */}
         <Link
           href={`/groups/${grupoId}/pulsera`}
           className="w-full flex items-center justify-center rounded-[25px] bg-[#D9D9D9] text-[#3A3A3A] font-normal focus:outline-none"

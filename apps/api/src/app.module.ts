@@ -5,6 +5,8 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AlumnosModule } from './alumnos/alumnos.module';
 import { GruposModule } from './grupos/grupos.module';
+import { PulserasModule } from './pulseras/pulseras.module';
+import { ColoresModule } from './colores/colores.module';
 
 @Module({
   imports: [
@@ -12,6 +14,8 @@ import { GruposModule } from './grupos/grupos.module';
     PrismaModule,
     AlumnosModule,
     GruposModule,
+    PulserasModule,
+    ColoresModule,
   ],
   controllers: [AppController],
   providers: [AppService],

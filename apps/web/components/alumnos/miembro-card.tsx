@@ -60,6 +60,7 @@ export function MiembroCard({ alumno, grupoId, colorFranja }: MiembroCardProps) 
           style={{
             fontSize: "clamp(12px, 1.2vw, 20px)",
             color: colorTexto,
+            textTransform: "uppercase",
           }}
         >
           {alumno.nombreCompleto ?? `${alumno.nombre} ${alumno.apellido}`}

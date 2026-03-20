@@ -43,11 +43,22 @@ model alumnos {
 }
 
 model grupos {
-  id         Int          @id @default(autoincrement()) @db.UnsignedInt
-  nombre     String       @unique(map: "uq_grupos_nombre") @db.VarChar(60)
-  color      grupos_color
-  created_at DateTime     @default(now()) @db.DateTime(0)
+  id         Int       @id @default(autoincrement()) @db.UnsignedInt
+  nombre     String    @unique(map: "uq_grupos_nombre") @db.VarChar(60)
+  color_id   Int       @unique(map: "uq_grupos_color_id") @db.UnsignedInt
+  created_at DateTime  @default(now()) @db.DateTime(0)
   alumnos    alumnos[]
+  colores    colores   @relation(fields: [color_id], references: [id], map: "fk_grupos_color")
+
+  @@index([color_id], map: "idx_grupos_color_id")
+}
+
+model colores {
+  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  nombre     String?  @db.VarChar(60)
+  valor_hex  String   @unique(map: "uq_colores_valor_hex") @db.Char(7)
+  created_at DateTime @default(now()) @db.DateTime(0)
+  grupos     grupos?
 }
 
 model pulseras {
@@ -72,13 +83,6 @@ enum pulseras_estado {
 enum alumno_contactos_tipo {
   TUTOR
   EMERGENCIA
-}
-
-enum grupos_color {
-  blue
-  coral
-  green
-  grey
 }
 
 enum alumnos_tipo_sangre {

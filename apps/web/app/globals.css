@@ -30,3 +30,23 @@ html, body {
 .sin-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+.formulario-registro-scrollbar {
+  scrollbar-width: auto;
+  scrollbar-color: #ffffff #8a8a8a;
+}
+
+.formulario-registro-scrollbar::-webkit-scrollbar {
+  width: 14px;
+}
+
+.formulario-registro-scrollbar::-webkit-scrollbar-track {
+  background: #8a8a8a;
+  border-radius: 999px;
+}
+
+.formulario-registro-scrollbar::-webkit-scrollbar-thumb {
+  background: #ffffff;
+  border: 2px solid #8a8a8a;
+  border-radius: 999px;
+}

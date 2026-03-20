@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import { GrupoHeader } from "@/components/grupos/grupo-header";
+import { MapaAlumnosSimulado } from "@/components/grupos/mapa-alumnos-simulado";
 import { TabBar } from "@/components/grupos/tab-bar";
-import { getGrupoById } from "@/lib/api/segurinite";
+import { getAlumnosByGrupo, getGrupoById } from "@/lib/api/segurinite";
 
 interface Props {
   params: Promise<{ grupoId: string }>;
@@ -15,7 +15,11 @@ interface Props {
 export default async function MapaPage({ params }: Props) {
   const { grupoId } = await params;
 
-  const grupo = await getGrupoById(grupoId);
+  const [grupo, alumnos] = await Promise.all([
+    getGrupoById(grupoId),
+    getAlumnosByGrupo(grupoId),
+  ]);
+
   if (!grupo) notFound();
 
   return (
@@ -26,23 +30,9 @@ export default async function MapaPage({ params }: Props) {
         className="flex-1 flex flex-col overflow-hidden"
         style={{ padding: "0 clamp(16px, 3.5vw, 51px) clamp(16px, 3.5vw, 51px)" }}
       >
-
         <TabBar grupoId={grupoId} />
 
-        <div
-          className="flex-1 overflow-hidden bg-white flex flex-col"
-          style={{ borderRadius: "0 25px 25px 25px", padding: 16 }}
-        >
-          <div className="flex-1 overflow-hidden relative" style={{ borderRadius: 16 }}>
-            <Image
-              src="/mapa.jpeg"
-              alt="Mapa del grupo"
-              fill
-              style={{ objectFit: "cover" }}
-              priority
-            />
-          </div>
-        </div>
+        <MapaAlumnosSimulado grupoId={grupoId} alumnos={alumnos} />
       </div>
     </>
   );
