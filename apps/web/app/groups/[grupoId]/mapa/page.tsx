@@ -32,7 +32,7 @@ export default async function MapaPage({ params }: Props) {
       >
         <TabBar grupoId={grupoId} />
 
-        <MapaAlumnosSimulado grupoId={grupoId} alumnos={alumnos} />
+        <MapaAlumnosSimulado grupoId={grupoId} alumnos={alumnos} colorGrupo={grupo.color} />
       </div>
     </>
   );

@@ -1,11 +1,16 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { AlumnoMock } from "@/lib/mock/alumnos";
 import { obtenerAlumnosEnRiesgoIds } from "@/lib/simulacion/alumnos-riesgo";
+import { resolverColorHex } from "@/lib/mock/grupos";
 
 interface MapaAlumnosSimuladoProps {
   grupoId: string;
   alumnos: AlumnoMock[];
+  colorGrupo: string;
 }
 
 interface MarcadorMapa {
@@ -18,6 +23,14 @@ interface MarcadorMapa {
 interface Punto {
   x: number;
   y: number;
+}
+
+interface DetallesAlumnoHover {
+  alumnoId: string;
+  nombreCompleto: string;
+  heartRate: number;
+  temperatura: string;
+  fueraDeRango: boolean;
 }
 
 function hashTexto(texto: string): number {
@@ -148,8 +161,60 @@ function nombreAlumno(alumno: AlumnoMock): string {
   return `${alumno.nombre} ${alumno.apellido}`.trim();
 }
 
-export function MapaAlumnosSimulado({ grupoId, alumnos }: MapaAlumnosSimuladoProps) {
+function colorTextoSegunFondo(colorHex: string): string {
+  const color = resolverColorHex(colorHex).replace("#", "");
+
+  const r = Number.parseInt(color.slice(0, 2), 16);
+  const g = Number.parseInt(color.slice(2, 4), 16);
+  const b = Number.parseInt(color.slice(4, 6), 16);
+
+  const luminancia = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminancia > 0.62 ? "#1E1E1E" : "#FFFFFF";
+}
+
+function simularHeartRate(grupoId: string, alumnoId: string, fueraDeRango: boolean): number {
+  const random = crearRandom(hashTexto(`${grupoId}-${alumnoId}-hr`));
+
+  if (fueraDeRango) {
+    return Math.round(randomEnRango(random, 112, 148));
+  }
+
+  return Math.round(randomEnRango(random, 66, 99));
+}
+
+function simularTemperatura(grupoId: string, alumnoId: string, fueraDeRango: boolean): string {
+  const random = crearRandom(hashTexto(`${grupoId}-${alumnoId}-temp`));
+
+  if (fueraDeRango) {
+    return randomEnRango(random, 37.8, 39.3).toFixed(1);
+  }
+
+  return randomEnRango(random, 36.1, 37.4).toFixed(1);
+}
+
+export function MapaAlumnosSimulado({ grupoId, alumnos, colorGrupo }: MapaAlumnosSimuladoProps) {
   const marcadores = generarMarcadores(grupoId, alumnos);
+  const [alumnoHoverId, setAlumnoHoverId] = useState<string | null>(null);
+
+  const detallesPorAlumno = useMemo(() => {
+    const detalles = new Map<string, DetallesAlumnoHover>();
+
+    marcadores.forEach((marcador) => {
+      detalles.set(marcador.alumno.id, {
+        alumnoId: marcador.alumno.id,
+        nombreCompleto: nombreAlumno(marcador.alumno),
+        heartRate: simularHeartRate(grupoId, marcador.alumno.id, marcador.fueraDeRango),
+        temperatura: simularTemperatura(grupoId, marcador.alumno.id, marcador.fueraDeRango),
+        fueraDeRango: marcador.fueraDeRango,
+      });
+    });
+
+    return detalles;
+  }, [grupoId, marcadores]);
+
+  const detallesHover = alumnoHoverId ? detallesPorAlumno.get(alumnoHoverId) ?? null : null;
+  const fondoPanel = resolverColorHex(colorGrupo);
+  const colorTextoPanel = colorTextoSegunFondo(fondoPanel);
 
   return (
     <div
@@ -169,6 +234,40 @@ export function MapaAlumnosSimulado({ grupoId, alumnos }: MapaAlumnosSimuladoPro
           priority
         />
 
+        {detallesHover && (
+          <div
+            className="absolute left-3 top-3 z-20 rounded-[14px]"
+            style={{
+              background: `${fondoPanel}CC`,
+              color: colorTextoPanel,
+              padding: "14px 16px",
+              boxShadow: "0 4px 8px rgba(0,0,0,0.24)",
+              width: "min(460px, calc(100% - 24px))",
+              minHeight: 60,
+            }}
+          >
+            <p
+              className="font-bold"
+              style={{
+                fontSize: 18,
+                lineHeight: 1.2,
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                flexWrap: "wrap",
+              }}
+            >
+              <span>{detallesHover.nombreCompleto}</span>
+              <span style={{ fontSize: 15, fontWeight: 600 }}>
+                FC: {detallesHover.heartRate} bpm · Temp: {detallesHover.temperatura}°C
+              </span>
+            </p>
+            <p style={{ fontSize: 14, marginTop: 6, opacity: 0.9 }}>
+              {detallesHover.fueraDeRango ? "Estado simulado: alerta" : "Estado simulado: normal"}
+            </p>
+          </div>
+        )}
+
         {marcadores.map((marcador) => {
           const colorBorde = marcador.fueraDeRango ? "#E56363" : "#3A3A3A";
           const sombra = marcador.fueraDeRango
@@ -182,6 +281,10 @@ export function MapaAlumnosSimulado({ grupoId, alumnos }: MapaAlumnosSimuladoPro
               className="group absolute -translate-x-1/2 -translate-y-1/2 focus:outline-none"
               style={{ left: `${marcador.x}%`, top: `${marcador.y}%` }}
               aria-label={`Ver información de ${nombreAlumno(marcador.alumno)}`}
+              onMouseEnter={() => setAlumnoHoverId(marcador.alumno.id)}
+              onMouseLeave={() => setAlumnoHoverId((actual) => (actual === marcador.alumno.id ? null : actual))}
+              onFocus={() => setAlumnoHoverId(marcador.alumno.id)}
+              onBlur={() => setAlumnoHoverId((actual) => (actual === marcador.alumno.id ? null : actual))}
             >
               <span
                 className="flex items-center justify-center rounded-full transition-all duration-200 ease-out w-6 h-6 group-hover:w-14 group-hover:h-14 group-focus-visible:w-14 group-focus-visible:h-14"
