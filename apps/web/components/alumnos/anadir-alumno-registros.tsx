@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { AlumnoMock } from "@/lib/mock/alumnos";
 import { asignarAlumnoAGrupo } from "@/lib/api/segurinite";
 import { BotonAtras } from "@/components/ui/boton-atras";
@@ -24,6 +25,7 @@ function normalizarTexto(valor: string): string {
 }
 
 export function AnadirAlumnoRegistros({ grupoId, alumnos }: AnadirAlumnoRegistrosProps) {
+  const router = useRouter();
   const [busqueda, setBusqueda] = useState("");
   const [toast, setToast] = useState<ToastData | null>(null);
   const [cargandoId, setCargandoId] = useState<string | null>(null);
@@ -98,7 +100,12 @@ export function AnadirAlumnoRegistros({ grupoId, alumnos }: AnadirAlumnoRegistro
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
       <div className="shrink-0 flex items-center" style={{ padding: "24px 28px 10px", gap: 20 }}>
-        <BotonAtras />
+        <BotonAtras
+          onClick={() => {
+            router.push(`/groups/${grupoId}`);
+            router.refresh();
+          }}
+        />
 
         <span className="text-[#3A3A3A] font-normal" style={{ fontSize: "clamp(24px, 2.2vw, 40px)" }}>
           REGISTROS

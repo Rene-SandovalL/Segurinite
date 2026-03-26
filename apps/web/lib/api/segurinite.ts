@@ -4,18 +4,7 @@ import {
   type GrupoColor,
   type GrupoMock,
 } from "@/lib/mock/grupos";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-
-class ApiHttpError extends Error {
-  constructor(
-    message: string,
-    public readonly status: number,
-  ) {
-    super(message);
-    this.name = "ApiHttpError";
-  }
-}
+import { apiFetch, ApiHttpError } from "./client";
 
 interface GrupoColorApiResponse {
   id: number;
@@ -129,46 +118,8 @@ export interface PulseraConectada {
   conectada: boolean;
 }
 
-function apiUrl(path: string): string {
-  const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  return `${API_BASE_URL}${cleanPath}`;
-}
-
 async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(apiUrl(path), {
-    cache: "no-store",
-    ...init,
-    headers: {
-      ...(init?.body ? { "Content-Type": "application/json" } : {}),
-      ...(init?.headers ?? {}),
-    },
-  });
-
-  if (!response.ok) {
-    let detalle = `Error API ${response.status} en ${path}`;
-
-    try {
-      const errorBody = (await response.json()) as
-        | { message?: string | string[] }
-        | undefined;
-
-      if (Array.isArray(errorBody?.message)) {
-        detalle = errorBody.message.join(", ");
-      } else if (typeof errorBody?.message === "string" && errorBody.message.trim()) {
-        detalle = errorBody.message;
-      }
-    } catch {
-      // sin body JSON
-    }
-
-    throw new ApiHttpError(detalle, response.status);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
+  return apiFetch<T>(path, init);
 }
 
 function formatDate(value: string | null): string | undefined {

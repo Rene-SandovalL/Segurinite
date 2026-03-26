@@ -6,11 +6,14 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { AlumnosService } from './alumnos.service';
 import { CreateAlumnoDto } from './dto/create-alumno.dto';
+import { JwtCookieAuthGuard } from '../auth/guards/jwt-cookie-auth.guard';
 
 @Controller('alumnos')
+@UseGuards(JwtCookieAuthGuard)
 export class AlumnosController {
   constructor(private readonly alumnosService: AlumnosService) {}
 

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { AlumnoMock } from "@/lib/mock/alumnos";
+import { obtenerAlumnosEnRiesgoIds } from "@/lib/simulacion/alumnos-riesgo";
 
 interface MapaAlumnosSimuladoProps {
   grupoId: string;
@@ -45,17 +46,6 @@ function crearRandom(seedInicial: number): () => number {
 
 function randomEnRango(random: () => number, minimo: number, maximo: number): number {
   return minimo + random() * (maximo - minimo);
-}
-
-function shuffleIndices(total: number, random: () => number): number[] {
-  const indices = Array.from({ length: total }, (_, index) => index);
-
-  for (let i = indices.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(random() * (i + 1));
-    [indices[i], indices[j]] = [indices[j], indices[i]];
-  }
-
-  return indices;
 }
 
 function distanciaCuadrada(a: Punto, b: Punto): number {
@@ -103,26 +93,24 @@ function generarMarcadores(grupoId: string, alumnos: AlumnoMock[]): MarcadorMapa
     return [];
   }
 
-  const semillaBase = hashTexto(`${grupoId}-${alumnos.map((alumno) => alumno.id).join("|")}`);
+  const alumnosOrdenados = [...alumnos].sort((alumnoA, alumnoB) =>
+    alumnoA.id.localeCompare(alumnoB.id),
+  );
+
+  const semillaBase = hashTexto(
+    `${grupoId}-${alumnosOrdenados.map((alumno) => alumno.id).join("|")}`,
+  );
   const random = crearRandom(semillaBase);
-
-  const cantidadFueraDeRango = Math.min(
-    alumnos.length,
-    alumnos.length === 1 ? 1 : 1 + Math.floor(random() * 2),
-  );
-
-  const fueraDeRangoSet = new Set(
-    shuffleIndices(alumnos.length, random).slice(0, cantidadFueraDeRango),
-  );
+  const alumnosEnRiesgoIds = obtenerAlumnosEnRiesgoIds(grupoId, alumnosOrdenados);
 
   const puntosGenerados: Punto[] = [];
   const marcadores: MarcadorMapa[] = [];
 
-  const distanciaMinima = alumnos.length > 16 ? 4.2 : 5.8;
+  const distanciaMinima = alumnosOrdenados.length > 16 ? 4.2 : 5.8;
   const distanciaMinimaCuadrada = distanciaMinima * distanciaMinima;
 
-  alumnos.forEach((alumno, index) => {
-    const fueraDeRango = fueraDeRangoSet.has(index);
+  alumnosOrdenados.forEach((alumno) => {
+    const fueraDeRango = alumnosEnRiesgoIds.has(alumno.id);
 
     let punto = fueraDeRango ? posicionFueraDeRango(random) : posicionNormal(random);
 
@@ -168,12 +156,6 @@ export function MapaAlumnosSimulado({ grupoId, alumnos }: MapaAlumnosSimuladoPro
       className="flex-1 overflow-hidden bg-white flex flex-col"
       style={{ borderRadius: "0 25px 25px 25px", paddingTop: 24, paddingInline: 10, paddingBottom: 10 }}
     >
-      <span
-        className="text-[#3A3A3A] font-normal"
-        style={{ fontSize: "clamp(30px, 2.2vw, 40px)", marginLeft: "clamp(24px, 3vw, 48px)", marginBottom: 8 }}
-      >
-        GATEWAY
-      </span>
 
       <div
         className="relative flex-1 overflow-hidden"

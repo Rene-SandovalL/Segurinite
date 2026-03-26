@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   COLOR_FONDO_PREDETERMINADO,
   resolverColorHex,
   type GrupoMock,
 } from "@/lib/mock/grupos";
+import { logoutAdmin } from "@/lib/api/auth";
 
 interface FondoDinamicoProps {
   children: React.ReactNode;
@@ -97,7 +98,9 @@ function MenuDerechoButton({
  */
 export function FondoDinamico({ children, grupos }: FondoDinamicoProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const [cerrandoSesion, setCerrandoSesion] = useState(false);
   // La ruta es /groups/[grupoId]/... — el grupoId está en el segmento índice 2
   const segmentos = pathname.split("/");
   const grupoId = segmentos[2] ?? "";
@@ -115,6 +118,19 @@ export function FondoDinamico({ children, grupos }: FondoDinamicoProps) {
   useEffect(() => {
     setMenuAbierto(false);
   }, [pathname]);
+
+  const handleCerrarSesion = async () => {
+    setCerrandoSesion(true);
+
+    try {
+      await logoutAdmin();
+    } finally {
+      setMenuAbierto(false);
+      router.push('/login');
+      router.refresh();
+      setCerrandoSesion(false);
+    }
+  };
 
   return (
     <main className="relative flex-1 h-full overflow-hidden flex flex-col">
@@ -196,7 +212,11 @@ export function FondoDinamico({ children, grupos }: FondoDinamicoProps) {
             </div>
 
             <div className="mt-5">
-              <MenuDerechoButton label="Cerrar Sesión" variant="danger" />
+              <MenuDerechoButton
+                label={cerrandoSesion ? 'Cerrando sesión...' : 'Cerrar Sesión'}
+                variant="danger"
+                onClick={() => void handleCerrarSesion()}
+              />
             </div>
           </div>
         </aside>

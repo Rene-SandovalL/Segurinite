@@ -2,16 +2,20 @@
 
 import { useRouter } from "next/navigation";
 
+interface BotonAtrasProps {
+  onClick?: () => void;
+}
+
 /**
  * Botón circular ← reutilizable.
  * Usa router.back() para regresar a la pantalla anterior.
  */
-export function BotonAtras() {
+export function BotonAtras({ onClick }: BotonAtrasProps) {
   const enrutador = useRouter();
 
   return (
     <button
-      onClick={() => enrutador.back()}
+      onClick={onClick ?? (() => enrutador.back())}
       className="w-11 h-11 rounded-full bg-white border-none cursor-pointer flex items-center justify-center shrink-0 focus:outline-none"
       style={{ boxShadow: "0 4px 4px 0 rgba(0,0,0,0.25)" }}
       aria-label="Volver"

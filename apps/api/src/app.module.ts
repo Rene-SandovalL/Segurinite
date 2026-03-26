@@ -7,6 +7,7 @@ import { AlumnosModule } from './alumnos/alumnos.module';
 import { GruposModule } from './grupos/grupos.module';
 import { PulserasModule } from './pulseras/pulseras.module';
 import { ColoresModule } from './colores/colores.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ColoresModule } from './colores/colores.module';
     GruposModule,
     PulserasModule,
     ColoresModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

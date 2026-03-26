@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { AlumnoMock } from "@/lib/mock/alumnos";
+import { obtenerAlumnosEnRiesgoIds } from "@/lib/simulacion/alumnos-riesgo";
 import { MiembroCard } from "./miembro-card";
 
 interface IntegrantesListaProps {
@@ -13,6 +14,8 @@ interface IntegrantesListaProps {
  * Muestra un grid de 3 columnas de tarjetas de alumnos.
  */
 export function IntegrantesLista({ alumnos, grupoId, colorFranja }: IntegrantesListaProps) {
+  const alumnosEnRiesgoIds = obtenerAlumnosEnRiesgoIds(grupoId, alumnos);
+
   return (
     <div className="h-full overflow-y-auto">
       <div className="flex flex-col" style={{ gap: 18, margin: 32 }}>
@@ -30,6 +33,7 @@ export function IntegrantesLista({ alumnos, grupoId, colorFranja }: IntegrantesL
               alumno={alumno}
               grupoId={grupoId}
               colorFranja={colorFranja}
+              forzarPeligro={alumnosEnRiesgoIds.has(alumno.id)}
             />
           ))}
         </div>

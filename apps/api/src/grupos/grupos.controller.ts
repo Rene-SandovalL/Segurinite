@@ -5,12 +5,15 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { GruposService } from './grupos.service';
 import { AlumnosService } from '../alumnos/alumnos.service';
 import { CreateGrupoDto } from './dto/create-grupo.dto';
+import { JwtCookieAuthGuard } from '../auth/guards/jwt-cookie-auth.guard';
 
 @Controller('grupos')
+@UseGuards(JwtCookieAuthGuard)
 export class GruposController {
   constructor(
     private readonly gruposService: GruposService,
