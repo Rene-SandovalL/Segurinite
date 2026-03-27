@@ -29,7 +29,7 @@ function shuffleIndices(total: number, random: () => number): number[] {
 
   for (let i = indices.length - 1; i > 0; i -= 1) {
     const j = Math.floor(random() * (i + 1));
-    [indices[i], indices[j]] = [indices[j], indices[i]];
+    [indices[i], indices[j]] = [indices[j]!, indices[i]!];
   }
 
   return indices;
@@ -52,15 +52,38 @@ export function obtenerAlumnosEnRiesgoIds(
   );
   const random = crearRandom(semillaBase);
 
-  const cantidadFueraDeRango = Math.min(
+  const riesgoIds = new Set(
+    alumnosOrdenados
+      .filter((alumno) => alumno.estado === "peligro")
+      .map((alumno) => alumno.id),
+  );
+
+  const objetivoRiesgo = Math.min(
     alumnosOrdenados.length,
-    alumnosOrdenados.length === 1 ? 1 : 1 + Math.floor(random() * 2),
+    alumnosOrdenados.length === 1 ? 1 : Math.max(2, riesgoIds.size),
   );
 
-  const indicesRiesgo = shuffleIndices(alumnosOrdenados.length, random).slice(
-    0,
-    cantidadFueraDeRango,
+  if (riesgoIds.size >= objetivoRiesgo) {
+    return riesgoIds;
+  }
+
+  const indicesDisponibles = shuffleIndices(alumnosOrdenados.length, random).filter(
+    (index) => !riesgoIds.has(alumnosOrdenados[index]?.id ?? ""),
   );
 
-  return new Set(indicesRiesgo.map((index) => alumnosOrdenados[index].id));
+  for (const index of indicesDisponibles) {
+    const alumno = alumnosOrdenados[index];
+
+    if (!alumno) {
+      continue;
+    }
+
+    riesgoIds.add(alumno.id);
+
+    if (riesgoIds.size >= objetivoRiesgo) {
+      break;
+    }
+  }
+
+  return riesgoIds;
 }

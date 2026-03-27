@@ -1,5 +1,7 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { FondoDinamico } from "@/components/layout/fondo-dinamico";
+import { AlertasProvider } from "@/components/alertas/AlertasProvider";
+import { AlertasBootstrap } from "@/components/alertas/AlertasBootstrap";
 import { getGrupos } from "@/lib/api/segurinite";
 
 export const metadata = {
@@ -23,8 +25,12 @@ export default async function DashboardLayout({
       {/* Sidebar izquierdo fijo */}
       <Sidebar grupos={grupos} />
 
-      {/* Panel principal con fondo de color dinámico según el grupo activo */}
-      <FondoDinamico grupos={grupos}>{children}</FondoDinamico>
+      <AlertasProvider>
+        <AlertasBootstrap />
+
+        {/* Panel principal con fondo de color dinámico según el grupo activo */}
+        <FondoDinamico grupos={grupos}>{children}</FondoDinamico>
+      </AlertasProvider>
     </div>
   );
 }
