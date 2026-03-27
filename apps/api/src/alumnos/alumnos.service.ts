@@ -17,6 +17,7 @@ import {
   CreateAlumnoDto,
   TutorCreateAlumnoDto,
 } from './dto/create-alumno.dto';
+import { UpdateAlumnoDto } from './dto/update-alumno.dto';
 
 interface AlumnoWithRelations {
   id: bigint;
@@ -229,6 +230,49 @@ export class AlumnosService {
     };
   }
 
+  private mapTutorUpdateAContacto(
+    tutor: {
+      nombre: string;
+      telefono: string;
+      parentesco?: string;
+      direccion?: string;
+    },
+    orden: number,
+  ): Prisma.alumno_contactosUncheckedCreateWithoutAlumnosInput {
+    return {
+      tipo: alumno_contactos_tipo.TUTOR,
+      orden,
+      parentesco: tutor.parentesco?.trim() || null,
+      nombre: tutor.nombre.trim(),
+      telefono: tutor.telefono.trim(),
+      direccion: tutor.direccion?.trim() || null,
+      fecha_nacimiento: null,
+    };
+  }
+
+  private mapEmergenciaUpdateAContacto(
+    contacto: {
+      nombre: string;
+      telefono: string;
+      fechaNacimiento?: string;
+      parentesco?: string;
+      direccion?: string;
+    },
+    orden: number,
+  ): Prisma.alumno_contactosUncheckedCreateWithoutAlumnosInput {
+    return {
+      tipo: alumno_contactos_tipo.EMERGENCIA,
+      orden,
+      parentesco: contacto.parentesco?.trim() || null,
+      nombre: contacto.nombre.trim(),
+      telefono: contacto.telefono.trim(),
+      direccion: contacto.direccion?.trim() || null,
+      fecha_nacimiento: contacto.fechaNacimiento
+        ? new Date(contacto.fechaNacimiento)
+        : null,
+    };
+  }
+
   private buildContactos(
     createAlumnoDto: CreateAlumnoDto,
   ): Prisma.alumno_contactosUncheckedCreateWithoutAlumnosInput[] {
@@ -398,14 +442,91 @@ export class AlumnosService {
     return this.mapAlumno(alumno);
   }
 
-  async assignToGrupo(id: number, grupoId: number): Promise<AlumnoResponse> {
-    const grupo = await this.prisma.grupos.findUnique({
-      where: { id: grupoId },
+  async update(
+    id: number,
+    updateAlumnoDto: UpdateAlumnoDto,
+  ): Promise<AlumnoResponse> {
+    const alumnoId = BigInt(id);
+    const alumnoExistente = await this.prisma.alumnos.findUnique({
+      where: { id: alumnoId },
       select: { id: true },
     });
 
-    if (!grupo) {
-      throw new NotFoundException(`No existe grupo con id ${grupoId}`);
+    if (!alumnoExistente) {
+      throw new NotFoundException(`No existe alumno con id ${id}`);
+    }
+
+    const debeActualizarContactos =
+      updateAlumnoDto.tutores !== undefined ||
+      updateAlumnoDto.contactosEmergencia !== undefined;
+
+    const alumnoActualizado = (await this.prisma.$transaction(async (tx) => {
+      if (debeActualizarContactos) {
+        await tx.alumno_contactos.deleteMany({
+          where: { alumno_id: alumnoId },
+        });
+
+        const tutores = (updateAlumnoDto.tutores ?? []).map((tutor, index) =>
+          this.mapTutorUpdateAContacto(tutor, index + 1),
+        );
+
+        const emergencias = (updateAlumnoDto.contactosEmergencia ?? []).map(
+          (contacto, index) =>
+            this.mapEmergenciaUpdateAContacto(contacto, index + 1),
+        );
+
+        const contactos = [...tutores, ...emergencias];
+
+        if (contactos.length > 0) {
+          await tx.alumno_contactos.createMany({
+            data: contactos.map((contacto) => ({
+              ...contacto,
+              alumno_id: alumnoId,
+            })),
+          });
+        }
+      }
+
+      return tx.alumnos.update({
+        where: { id: alumnoId },
+        data: {
+          nombre: updateAlumnoDto.nombre?.trim(),
+          apellido: updateAlumnoDto.apellido?.trim(),
+          fecha_nacimiento:
+            updateAlumnoDto.fechaNacimiento !== undefined
+              ? updateAlumnoDto.fechaNacimiento
+                ? new Date(updateAlumnoDto.fechaNacimiento)
+                : null
+              : undefined,
+          tipo_sangre:
+            updateAlumnoDto.tipoSangre !== undefined
+              ? this.mapTipoSangreInput(updateAlumnoDto.tipoSangre)
+              : undefined,
+        },
+        select: ALUMNO_SELECT,
+      });
+    })) as AlumnoWithRelations;
+
+    return this.mapAlumno(alumnoActualizado);
+  }
+
+  async assignToGrupo(id: number, grupoId: number): Promise<AlumnoResponse> {
+    return this.updateGrupo(id, grupoId);
+  }
+
+  async updateGrupo(
+    id: number,
+    grupoId: number | null,
+  ): Promise<AlumnoResponse> {
+    if (grupoId !== null) {
+      const grupo = await this.prisma.grupos.findUnique({
+        where: { id: grupoId },
+        select: { id: true },
+      });
+
+      if (!grupo) {
+        throw new NotFoundException(`No existe grupo con id ${grupoId}`);
+      }
     }
 
     const alumnoId = BigInt(id);

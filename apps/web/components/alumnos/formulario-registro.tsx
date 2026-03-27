@@ -1,10 +1,30 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CreateAlumnoPayload } from "@/lib/api/segurinite";
 
 type TipoSangreFormulario = CreateAlumnoPayload["tipoSangre"] | "";
 type ParentescoFormulario = "" | "madre" | "padre" | "hermano" | "otros";
+
+export interface FormularioRegistroInitialValues {
+  nombre?: string;
+  apellido?: string;
+  fechaNacimiento?: string;
+  tipoSangre?: TipoSangreFormulario;
+  tutor1Nombre?: string;
+  tutor1Telefono?: string;
+  tutor1Parentesco?: ParentescoFormulario;
+  tutor1Direccion?: string;
+  tutor2Nombre?: string;
+  tutor2Telefono?: string;
+  tutor2Parentesco?: ParentescoFormulario;
+  tutor2Direccion?: string;
+  emergenciaNombre?: string;
+  emergenciaTelefono?: string;
+  emergenciaParentesco?: ParentescoFormulario;
+  emergenciaDireccion?: string;
+  emergenciaFechaNacimiento?: string;
+}
 
 interface CampoTextoProps {
   label: string;
@@ -188,12 +208,16 @@ interface FormularioRegistroProps {
   onVolver: () => void;
   onRegistrar: (payload: Omit<CreateAlumnoPayload, "pulseraId">) => Promise<void> | void;
   registrando?: boolean;
+  modo?: "registro" | "edicion";
+  initialValues?: FormularioRegistroInitialValues;
 }
 
 export function FormularioRegistro({
   onVolver,
   onRegistrar,
   registrando = false,
+  modo = "registro",
+  initialValues,
 }: FormularioRegistroProps) {
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
@@ -218,6 +242,31 @@ export function FormularioRegistro({
 
   const [mensajeError, setMensajeError] = useState<string | null>(null);
 
+  const aplicarValoresIniciales = (values?: FormularioRegistroInitialValues) => {
+    setNombre(values?.nombre ?? "");
+    setApellido(values?.apellido ?? "");
+    setFechaNacimiento(values?.fechaNacimiento ?? "");
+    setTipoSangre(values?.tipoSangre ?? "");
+    setTutor1Nombre(values?.tutor1Nombre ?? "");
+    setTutor1Telefono(values?.tutor1Telefono ?? "");
+    setTutor1Parentesco(values?.tutor1Parentesco ?? "");
+    setTutor1Direccion(values?.tutor1Direccion ?? "");
+    setTutor2Nombre(values?.tutor2Nombre ?? "");
+    setTutor2Telefono(values?.tutor2Telefono ?? "");
+    setTutor2Parentesco(values?.tutor2Parentesco ?? "");
+    setTutor2Direccion(values?.tutor2Direccion ?? "");
+    setEmergenciaNombre(values?.emergenciaNombre ?? "");
+    setEmergenciaTelefono(values?.emergenciaTelefono ?? "");
+    setEmergenciaParentesco(values?.emergenciaParentesco ?? "");
+    setEmergenciaDireccion(values?.emergenciaDireccion ?? "");
+    setEmergenciaFechaNacimiento(values?.emergenciaFechaNacimiento ?? "");
+  };
+
+  useEffect(() => {
+    aplicarValoresIniciales(initialValues);
+    setMensajeError(null);
+  }, [initialValues]);
+
   const telefonosInvalidos = useMemo(() => {
     const patron = /^\d{10}$/;
     const telefonos = [tutor1Telefono, tutor2Telefono, emergenciaTelefono]
@@ -228,26 +277,10 @@ export function FormularioRegistro({
   }, [emergenciaTelefono, tutor1Telefono, tutor2Telefono]);
 
   const limpiarFormulario = () => {
-    setNombre("");
-    setApellido("");
-    setFechaNacimiento("");
-    setTipoSangre("");
-    setTutor1Nombre("");
-    setTutor1Telefono("");
-    setTutor1Parentesco("");
-    setTutor1Direccion("");
-    setTutor2Nombre("");
-    setTutor2Telefono("");
-    setTutor2Parentesco("");
-    setTutor2Direccion("");
-    setEmergenciaNombre("");
-    setEmergenciaTelefono("");
-    setEmergenciaParentesco("");
-    setEmergenciaDireccion("");
-    setEmergenciaFechaNacimiento("");
+    aplicarValoresIniciales(initialValues);
   };
 
-  const handleRegistrar = async () => {
+  const handleSubmit = async () => {
     setMensajeError(null);
 
     if (!nombre.trim() || !apellido.trim()) {
@@ -301,7 +334,9 @@ export function FormularioRegistro({
 
     try {
       await onRegistrar(payload);
-      limpiarFormulario();
+      if (modo === "registro") {
+        limpiarFormulario();
+      }
     } catch (error) {
       if (error instanceof Error) {
         setMensajeError(error.message);
@@ -331,7 +366,7 @@ export function FormularioRegistro({
         </button>
 
         <span className="text-[#3A3A3A] font-normal" style={{ fontSize: "clamp(20px, 2.2vw, 32px)" }}>
-          REGISTRAR INFORMACIÓN
+          {modo === "edicion" ? "ACTUALIZAR INFORMACIÓN" : "REGISTRAR INFORMACIÓN"}
         </span>
       </div>
 
@@ -400,7 +435,7 @@ export function FormularioRegistro({
 
       <div className="shrink-0 flex justify-end" style={{ padding: "16px clamp(20px, 3vw, 48px) 24px" }}>
         <button
-          onClick={() => void handleRegistrar()}
+          onClick={() => void handleSubmit()}
           disabled={registrando}
           className="border-none cursor-pointer font-normal text-[#3A3A3A] focus:outline-none"
           style={{
@@ -414,7 +449,13 @@ export function FormularioRegistro({
           }}
           type="button"
         >
-          {registrando ? "Registrando..." : "Registrar"}
+          {registrando
+            ? modo === "edicion"
+              ? "Guardando..."
+              : "Registrando..."
+            : modo === "edicion"
+              ? "Guardar cambios"
+              : "Registrar"}
         </button>
       </div>
     </div>

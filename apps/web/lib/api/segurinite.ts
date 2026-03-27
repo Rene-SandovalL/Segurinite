@@ -93,6 +93,15 @@ export interface CreateAlumnoPayload {
   contactosEmergencia?: ContactoEmergenciaCreateAlumnoPayload[];
 }
 
+export interface UpdateAlumnoPayload {
+  nombre?: string;
+  apellido?: string;
+  fechaNacimiento?: string;
+  tipoSangre?: "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-" | "O+" | "O-";
+  tutores?: TutorCreateAlumnoPayload[];
+  contactosEmergencia?: ContactoEmergenciaCreateAlumnoPayload[];
+}
+
 export interface ColorGrupoDisponible {
   id: number;
   nombre: string | null;
@@ -233,7 +242,10 @@ function mapAlumno(alumno: AlumnoApiResponse): AlumnoMock {
       nombre: contacto.nombre,
       edad: ageFromDate(contacto.fechaNacimiento) ?? 0,
       fechaNacimiento: formatDate(contacto.fechaNacimiento) ?? "—",
+      fechaNacimientoIso: contacto.fechaNacimiento ?? undefined,
       telefono: contacto.telefono,
+      parentesco: contacto.parentesco ?? undefined,
+      direccion: contacto.direccion ?? undefined,
     }));
 
   return {
@@ -249,6 +261,7 @@ function mapAlumno(alumno: AlumnoApiResponse): AlumnoMock {
     nombreCompleto: `${alumno.nombre} ${alumno.apellido}`,
     edad: ageFromDate(alumno.fechaNacimiento),
     fechaNacimiento: formatDate(alumno.fechaNacimiento),
+    fechaNacimientoIso: alumno.fechaNacimiento ?? undefined,
     tipoSangre: alumno.tipoSangre ?? undefined,
     direccion: direccionesTutor[0],
     nombrePadre: contactoTutor?.nombre ?? undefined,
@@ -325,6 +338,27 @@ export async function crearAlumno(payload: CreateAlumnoPayload): Promise<AlumnoM
   const alumno = await fetchApi<AlumnoApiResponse>("/alumnos", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+
+  return mapAlumno(alumno);
+}
+
+export async function actualizarAlumno(
+  alumnoId: string,
+  payload: UpdateAlumnoPayload,
+): Promise<AlumnoMock> {
+  const alumno = await fetchApi<AlumnoApiResponse>(`/alumnos/${alumnoId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+
+  return mapAlumno(alumno);
+}
+
+export async function quitarAlumnoDeGrupo(alumnoId: string): Promise<AlumnoMock> {
+  const alumno = await fetchApi<AlumnoApiResponse>(`/alumnos/${alumnoId}/grupo`, {
+    method: "PATCH",
+    body: JSON.stringify({ grupoId: null }),
   });
 
   return mapAlumno(alumno);

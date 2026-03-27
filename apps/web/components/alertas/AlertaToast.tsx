@@ -22,18 +22,6 @@ export function AlertaToast({ alerta, onDismiss }: AlertaToastProps) {
     };
   }, []);
 
-  useEffect(() => {
-    const autoCloseDelay = 8000 + Math.floor(Math.random() * 4001);
-    const autoCloseId = window.setTimeout(() => {
-      handleClose();
-    }, autoCloseDelay);
-
-    return () => {
-      window.clearTimeout(autoCloseId);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const handleClose = () => {
     setVisible(false);
 

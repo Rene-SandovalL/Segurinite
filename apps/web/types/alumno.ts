@@ -6,7 +6,10 @@ export interface ContactoEmergencia {
   nombre: string;
   edad: number;
   fechaNacimiento: string;
+  fechaNacimientoIso?: string;
   telefono: string;
+  parentesco?: string;
+  direccion?: string;
 }
 
 export interface TutorAlumno {
@@ -36,6 +39,7 @@ export interface Alumno {
   nombreCompleto?: string;
   edad?: number;
   fechaNacimiento?: string;
+  fechaNacimientoIso?: string;
   tipoSangre?: string;
   direccion?: string;
   nombrePadre?: string;
