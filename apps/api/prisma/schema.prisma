@@ -4,20 +4,20 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
 }
 
 model alumno_contactos {
-  id               BigInt                @id @default(autoincrement()) @db.UnsignedBigInt
-  alumno_id        BigInt                @db.UnsignedBigInt
+  id               BigInt                @id @default(autoincrement())
+  alumno_id        BigInt
   tipo             alumno_contactos_tipo
-  orden            Int?                  @db.UnsignedTinyInt
+  orden            Int?
   parentesco       String?               @db.VarChar(30)
   nombre           String                @db.VarChar(120)
   telefono         String                @db.VarChar(20)
   fecha_nacimiento DateTime?             @db.Date
   direccion        String?               @db.VarChar(255)
-  created_at       DateTime              @default(now()) @db.DateTime(0)
+  created_at       DateTime              @default(now()) @db.Timestamp(0)
   alumnos          alumnos               @relation(fields: [alumno_id], references: [id], onDelete: Cascade, map: "fk_contactos_alumno")
 
   @@unique([alumno_id, tipo, orden], map: "uq_contacto_tutor_orden")
@@ -25,16 +25,16 @@ model alumno_contactos {
 }
 
 model alumnos {
-  id               BigInt               @id @default(autoincrement()) @db.UnsignedBigInt
-  grupo_id         Int?                 @db.UnsignedInt
-  pulsera_id       BigInt?              @unique(map: "uq_alumnos_pulsera_id") @db.UnsignedBigInt
+  id               BigInt               @id @default(autoincrement())
+  grupo_id         Int?
+  pulsera_id       BigInt?              @unique(map: "uq_alumnos_pulsera_id")
   nombre           String               @db.VarChar(60)
   apellido         String               @db.VarChar(60)
   fecha_nacimiento DateTime?            @db.Date
   tipo_sangre      alumnos_tipo_sangre?
   estado           alumnos_estado       @default(normal)
-  created_at       DateTime             @default(now()) @db.DateTime(0)
-  updated_at       DateTime             @default(now()) @db.DateTime(0)
+  created_at       DateTime             @default(now()) @db.Timestamp(0)
+  updated_at       DateTime             @default(now()) @db.Timestamp(0)
   alumno_contactos alumno_contactos[]
   grupos           grupos?              @relation(fields: [grupo_id], references: [id], map: "fk_alumnos_grupo")
   pulseras         pulseras?            @relation(fields: [pulsera_id], references: [id], map: "fk_alumnos_pulsera")
@@ -43,10 +43,10 @@ model alumnos {
 }
 
 model grupos {
-  id         Int       @id @default(autoincrement()) @db.UnsignedInt
+  id         Int       @id @default(autoincrement())
   nombre     String    @unique(map: "uq_grupos_nombre") @db.VarChar(60)
-  color_id   Int       @unique(map: "uq_grupos_color_id") @db.UnsignedInt
-  created_at DateTime  @default(now()) @db.DateTime(0)
+  color_id   Int       @unique(map: "uq_grupos_color_id")
+  created_at DateTime  @default(now()) @db.Timestamp(0)
   alumnos    alumnos[]
   colores    colores   @relation(fields: [color_id], references: [id], map: "fk_grupos_color")
 
@@ -54,34 +54,34 @@ model grupos {
 }
 
 model colores {
-  id         Int      @id @default(autoincrement()) @db.UnsignedInt
+  id         Int      @id @default(autoincrement())
   nombre     String?  @db.VarChar(60)
   valor_hex  String   @unique(map: "uq_colores_valor_hex") @db.Char(7)
-  created_at DateTime @default(now()) @db.DateTime(0)
+  created_at DateTime @default(now()) @db.Timestamp(0)
   grupos     grupos?
 }
 
 model pulseras {
-  id           BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  id           BigInt          @id @default(autoincrement())
   uuid         String          @unique(map: "uq_pulseras_uuid") @db.VarChar(64)
   estado       pulseras_estado @default(DISPONIBLE)
   mac_address  String?         @unique(map: "uq_pulseras_mac") @db.VarChar(17)
-  bateria      Int?            @db.UnsignedTinyInt
-  last_seen_at DateTime?       @db.DateTime(0)
-  created_at   DateTime        @default(now()) @db.DateTime(0)
-  updated_at   DateTime        @default(now()) @db.DateTime(0)
+  bateria      Int?
+  last_seen_at DateTime?       @db.Timestamp(0)
+  created_at   DateTime        @default(now()) @db.Timestamp(0)
+  updated_at   DateTime        @default(now()) @db.Timestamp(0)
   alumnos      alumnos?
 }
 
 model usuarios {
-  id                       BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
+  id                       BigInt       @id @default(autoincrement())
   email                    String       @unique(map: "uq_usuarios_email") @db.VarChar(255)
   password_hash            String       @db.VarChar(255)
   rol                      usuarios_rol @default(ADMIN)
   refresh_token_hash       String?      @db.VarChar(255)
-  refresh_token_expires_at DateTime?    @db.DateTime(0)
-  created_at               DateTime     @default(now()) @db.DateTime(0)
-  updated_at               DateTime     @default(now()) @db.DateTime(0)
+  refresh_token_expires_at DateTime?    @db.Timestamp(0)
+  created_at               DateTime     @default(now()) @db.Timestamp(0)
+  updated_at               DateTime     @default(now()) @db.Timestamp(0)
 }
 
 enum pulseras_estado {

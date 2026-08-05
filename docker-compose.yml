@@ -1,23 +1,59 @@
 services:
   db:
-    image: mysql:8.0
+    image: postgres:16-alpine
     container_name: segurinite_db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - '${DB_PORT}:3306'
+      - '${DB_PORT}:5432'
     volumes:
-      - segurinite_mysql_data:/var/lib/mysql
+      - segurinite_pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-p${DB_ROOT_PASSWORD}']
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER} -d ${DB_NAME}']
       interval: 10s
       timeout: 5s
       retries: 5
 
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: segurinite_timescaledb
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${TIMESCALE_DB_NAME}
+      POSTGRES_USER: ${TIMESCALE_DB_USER}
+      POSTGRES_PASSWORD: ${TIMESCALE_DB_PASSWORD}
+    ports:
+      - '${TIMESCALE_DB_PORT}:5432'
+    volumes:
+      - segurinite_timescale_data:/var/lib/postgresql/data
+      - ./timescaledb/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${TIMESCALE_DB_USER} -d ${TIMESCALE_DB_NAME}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  broker:
+    image: eclipse-mosquitto:2.0
+    container_name: segurinite_broker
+    restart: unless-stopped
+    ports:
+      - '1883:1883'   # MQTT — el firmware real publica aquí
+      - '9001:9001'   # MQTT sobre WebSockets (por si el dashboard llega a suscribirse directo)
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - segurinite_mosquitto_data:/mosquitto/data
+      - segurinite_mosquitto_log:/mosquitto/log
+
 volumes:
-  segurinite_mysql_data:
+  segurinite_pg_data:
+    driver: local
+  segurinite_timescale_data:
+    driver: local
+  segurinite_mosquitto_data:
+    driver: local
+  segurinite_mosquitto_log:
     driver: local

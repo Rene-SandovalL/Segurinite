@@ -1,24 +1,16 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { PrismaMariaDb } from '@prisma/adapter-mariadb';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import { PrismaClient } from '../src/generated/prisma/client';
 
-function createPrismaAdapter(): PrismaMariaDb {
+function createPrismaAdapter(): PrismaPg {
   const databaseUrl = process.env.DATABASE_URL;
 
   if (!databaseUrl) {
     throw new Error('DATABASE_URL no está configurada para Prisma');
   }
 
-  const parsedUrl = new URL(databaseUrl);
-
-  return new PrismaMariaDb({
-    host: parsedUrl.hostname,
-    port: Number(parsedUrl.port || '3306'),
-    user: decodeURIComponent(parsedUrl.username),
-    password: decodeURIComponent(parsedUrl.password),
-    database: parsedUrl.pathname.replace(/^\//, ''),
-    allowPublicKeyRetrieval: true,
-  });
+  return new PrismaPg(new Pool({ connectionString: databaseUrl }));
 }
 
 @Injectable()
