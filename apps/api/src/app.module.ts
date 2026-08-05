@@ -8,6 +8,7 @@ import { GruposModule } from './grupos/grupos.module';
 import { PulserasModule } from './pulseras/pulseras.module';
 import { ColoresModule } from './colores/colores.module';
 import { AuthModule } from './auth/auth.module';
+import { TelemetriaModule } from './telemetria/telemetria.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { AuthModule } from './auth/auth.module';
     PulserasModule,
     ColoresModule,
     AuthModule,
+    TelemetriaModule,
   ],
   controllers: [AppController],
   providers: [AppService],

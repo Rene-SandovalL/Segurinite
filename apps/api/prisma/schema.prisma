@@ -49,6 +49,7 @@ model grupos {
   created_at DateTime  @default(now()) @db.Timestamp(0)
   alumnos    alumnos[]
   colores    colores   @relation(fields: [color_id], references: [id], map: "fk_grupos_color")
+  zonas      zonas?
 
   @@index([color_id], map: "idx_grupos_color_id")
 }
@@ -62,15 +63,19 @@ model colores {
 }
 
 model pulseras {
-  id           BigInt          @id @default(autoincrement())
-  uuid         String          @unique(map: "uq_pulseras_uuid") @db.VarChar(64)
-  estado       pulseras_estado @default(DISPONIBLE)
-  mac_address  String?         @unique(map: "uq_pulseras_mac") @db.VarChar(17)
-  bateria      Int?
-  last_seen_at DateTime?       @db.Timestamp(0)
-  created_at   DateTime        @default(now()) @db.Timestamp(0)
-  updated_at   DateTime        @default(now()) @db.Timestamp(0)
-  alumnos      alumnos?
+  id               BigInt          @id @default(autoincrement())
+  uuid             String          @unique(map: "uq_pulseras_uuid") @db.VarChar(64)
+  estado           pulseras_estado @default(DISPONIBLE)
+  mac_address      String?         @unique(map: "uq_pulseras_mac") @db.VarChar(17)
+  bateria          Int?
+  last_seen_at     DateTime?       @db.Timestamp(0)
+  ultimo_beacon_id Int?
+  ultimo_bpm       Int?
+  ultimo_spo2      Decimal?        @db.Decimal(4, 1)
+  ultima_temp      Decimal?        @db.Decimal(4, 1)
+  created_at       DateTime        @default(now()) @db.Timestamp(0)
+  updated_at       DateTime        @default(now()) @db.Timestamp(0)
+  alumnos          alumnos?
 }
 
 model usuarios {
@@ -115,4 +120,46 @@ enum alumnos_estado {
 
 enum usuarios_rol {
   ADMIN
+}
+
+enum zona_tipo {
+  SALON
+  AREA_COMUN
+  ENTRADA
+  OTRO
+}
+
+model zonas {
+  id         Int       @id @default(autoincrement())
+  nombre     String    @db.VarChar(60)
+  tipo       zona_tipo @default(SALON)
+  grupo_id   Int?      @unique(map: "uq_zonas_grupo_id")
+  created_at DateTime  @default(now()) @db.Timestamp(0)
+  grupos     grupos?   @relation(fields: [grupo_id], references: [id], map: "fk_zonas_grupo")
+  beacons    beacons[]
+}
+
+model mapas {
+  id         Int       @id @default(autoincrement())
+  nombre     String    @db.VarChar(60)
+  imagen_url String    @db.VarChar(500)
+  created_at DateTime  @default(now()) @db.Timestamp(0)
+  beacons    beacons[]
+}
+
+model beacons {
+  id         Int      @id @default(autoincrement())
+  beacon_id  Int      @unique(map: "uq_beacons_beacon_id")
+  zona_id    Int
+  mapa_id    Int?
+  nombre     String?  @db.VarChar(60)
+  pos_x      Decimal? @db.Decimal(5, 4)
+  pos_y      Decimal? @db.Decimal(5, 4)
+  activo     Boolean  @default(true)
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  zonas      zonas    @relation(fields: [zona_id], references: [id], map: "fk_beacons_zona")
+  mapas      mapas?   @relation(fields: [mapa_id], references: [id], map: "fk_beacons_mapa")
+
+  @@index([zona_id], map: "idx_beacons_zona_id")
+  @@index([mapa_id], map: "idx_beacons_mapa_id")
 }

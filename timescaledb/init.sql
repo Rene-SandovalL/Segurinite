@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS telemetria (
                                -- no se puede resolver con un JOIN porque alumnos vive en la otra base
   beacon_id    INTEGER,       -- BEACON_ID del firmware; NULL cuando el payload manda area:-1
   bpm          SMALLINT,
-  spo2         SMALLINT,
+  spo2         NUMERIC(4,1),
   temperatura  NUMERIC(4,1)
 );
 
