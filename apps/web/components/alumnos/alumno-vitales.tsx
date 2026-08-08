@@ -1,24 +1,67 @@
+"use client";
+
+import { useState } from "react";
 import type { DatosVitales } from "@/types/alumno";
+import { useTelemetriaSocket } from "@/hooks/useTelemetriaSocket";
 
 interface AlumnoVitalesProps {
-  vitales?: DatosVitales;
+  alumnoId: string;
+  vitalesIniciales?: DatosVitales;
+}
+
+interface TarjetaVitalProps {
+  etiqueta: string;
+  valor: string;
+  colorBorde: string;
 }
 
 /**
  * Panel derecho del detalle del alumno.
- * Muestra foto placeholder y tarjetas de datos vitales (presión arterial y temperatura).
+ * Muestra foto placeholder y tarjetas de datos vitales, en vivo vía WebSocket.
  */
-export function AlumnoVitales({ vitales }: AlumnoVitalesProps) {
+function TarjetaVital({ etiqueta, valor, colorBorde }: TarjetaVitalProps) {
   return (
     <div
-      className="flex flex-col overflow-hidden flex-1"
-      style={{ background: "#3A3A3A" }}
+      className="flex flex-col items-center"
+      style={{
+        width: "90%",
+        background: "#3A3A3A",
+        borderRadius: 22,
+        border: `4px solid ${colorBorde}`,
+        padding: "10px 18px 16px",
+        gap: 4,
+      }}
     >
+      <span className="text-white" style={{ fontSize: "clamp(16px, 1.8vw, 32px)" }}>
+        {etiqueta}
+      </span>
+      <span className="text-white" style={{ fontSize: "clamp(26px, 3.5vw, 56px)" }}>
+        {valor}
+      </span>
+    </div>
+  );
+}
+
+export function AlumnoVitales({ alumnoId, vitalesIniciales }: AlumnoVitalesProps) {
+  const [vitales, setVitales] = useState<DatosVitales | undefined>(vitalesIniciales);
+
+  useTelemetriaSocket((evento) => {
+    if (evento.alumnoId !== alumnoId) {
+      return;
+    }
+
+    setVitales({
+      spo2: evento.spo2,
+      pulso: evento.bpm,
+      temperatura: evento.temp,
+      ultimaLectura: "Hace unos segundos",
+    });
+  });
+
+  return (
+    <div className="flex flex-col overflow-hidden flex-1" style={{ background: "#3A3A3A" }}>
       {/* Foto placeholder */}
-      <div
-        className="w-full shrink-0"
-        style={{ height: "32%", background: "#D9D9D9" }}
-      />
+      <div className="w-full shrink-0" style={{ height: "32%", background: "#D9D9D9" }} />
 
       {/* Área de vitales — scrollable */}
       <div
@@ -32,71 +75,21 @@ export function AlumnoVitales({ vitales }: AlumnoVitalesProps) {
           Datos Vitales
         </span>
 
-        {/* ── Tarjeta: Presión arterial (borde rojo) ── */}
-        <div
-          className="flex flex-col"
-          style={{
-            width: "90%",
-            background: "#3A3A3A",
-            borderRadius: 22,
-            border: "4px solid #FA3A3A",
-            padding: "10px 18px 14px",
-          }}
-        >
-          <div className="text-center pb-0.5">
-            <span className="text-white" style={{ fontSize: "clamp(16px, 1.8vw, 28px)" }}>
-              Presion arterial
-            </span>
-          </div>
-          <div className="text-center pb-1.5">
-            <span className="text-white" style={{ fontSize: "clamp(11px, 1.2vw, 18px)" }}>
-              ({vitales?.ultimaLectura ?? "—"})
-            </span>
-          </div>
-
-          <div className="h-px bg-[#6A6A6A]" />
-
-          {[
-            { etiqueta: "SYS",   valor: vitales?.presionSys },
-            { etiqueta: "DIA",   valor: vitales?.presionDia },
-            { etiqueta: "PULSE", valor: vitales?.pulso },
-          ].map(({ etiqueta, valor }, i, lista) => (
-            <div key={etiqueta}>
-              <div
-                className="flex justify-between items-center"
-                style={{ padding: "7px 6px" }}
-              >
-                <span className="text-white" style={{ fontSize: "clamp(14px, 1.8vw, 30px)" }}>
-                  {etiqueta}
-                </span>
-                <span className="text-white" style={{ fontSize: "clamp(14px, 1.8vw, 30px)" }}>
-                  {valor ?? "—"}
-                </span>
-              </div>
-              {i < lista.length - 1 && <div className="h-px bg-[#6A6A6A]" />}
-            </div>
-          ))}
-        </div>
-
-        {/* ── Tarjeta: Temperatura (borde azul) ── */}
-        <div
-          className="flex flex-col items-center"
-          style={{
-            width: "90%",
-            background: "#3A3A3A",
-            borderRadius: 22,
-            border: "4px solid #575EAA",
-            padding: "10px 18px 16px",
-            gap: 4,
-          }}
-        >
-          <span className="text-white" style={{ fontSize: "clamp(16px, 1.8vw, 32px)" }}>
-            Temperatura
-          </span>
-          <span className="text-white" style={{ fontSize: "clamp(26px, 3.5vw, 56px)" }}>
-            {vitales ? `${vitales.temperatura} °C` : "—"}
-          </span>
-        </div>
+        <TarjetaVital
+          etiqueta="SpO2"
+          valor={vitales?.spo2 != null ? `${vitales.spo2}%` : "—"}
+          colorBorde="#87D67B"
+        />
+        <TarjetaVital
+          etiqueta="Pulso"
+          valor={vitales?.pulso != null ? `${vitales.pulso} bpm` : "—"}
+          colorBorde="#FF7043"
+        />
+        <TarjetaVital
+          etiqueta="Temperatura"
+          valor={vitales?.temperatura != null ? `${vitales.temperatura} °C` : "—"}
+          colorBorde="#575EAA"
+        />
       </div>
     </div>
   );

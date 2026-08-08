@@ -6,7 +6,6 @@ interface MiembroCardProps {
   grupoId: string;
   /** Color hex de la franja lateral (del grupo) */
   colorFranja: string;
-  forzarPeligro?: boolean;
 }
 
 /**
@@ -15,13 +14,8 @@ interface MiembroCardProps {
  * - Estado normal    → fondo blanco, texto oscuro
  * Usa <Link> para navegar al detalle del alumno.
  */
-export function MiembroCard({
-  alumno,
-  grupoId,
-  colorFranja,
-  forzarPeligro = false,
-}: MiembroCardProps) {
-  const enPeligro = alumno.estado === "peligro" || forzarPeligro;
+export function MiembroCard({ alumno, grupoId, colorFranja }: MiembroCardProps) {
+  const enPeligro = alumno.estado === "peligro";
   const fondoTarjeta = enPeligro ? "#E66363" : "#FFFFFF";
   const colorTexto = enPeligro ? "#FFFFFF" : "#3A3A3A";
 

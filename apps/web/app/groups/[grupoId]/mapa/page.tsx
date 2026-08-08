@@ -5,7 +5,7 @@ import { TabBar } from "@/components/grupos/tab-bar";
 import { MapaEdicion } from "@/components/mapas/mapa-edicion";
 import { SelectorMapa } from "@/components/mapas/selector-mapa";
 import {
-  getAlumnosByGrupo,
+  getAlumnosMapa,
   getBeaconsSinPosicion,
   getGrupoById,
   getMapaById,
@@ -28,10 +28,10 @@ export default async function MapaPage({ params, searchParams }: Props) {
   const { grupoId } = await params;
   const { mapaId } = await searchParams;
 
-  const [grupo, mapas, alumnos] = await Promise.all([
+  const [grupo, mapas, alumnosMapa] = await Promise.all([
     getGrupoById(grupoId),
     getMapas(),
-    getAlumnosByGrupo(grupoId),
+    getAlumnosMapa(grupoId),
   ]);
 
   if (!grupo) notFound();
@@ -109,8 +109,7 @@ export default async function MapaPage({ params, searchParams }: Props) {
               beaconsSinPosicionIniciales={beaconsSinPosicion}
               zonas={zonas}
               grupoId={grupoId}
-              alumnosSimulados={alumnos}
-              colorGrupo={grupo.color}
+              alumnosMapa={alumnosMapa}
             />
           )}
         </div>

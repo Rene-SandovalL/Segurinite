@@ -9,14 +9,12 @@ interface AlumnoCardDraggableProps {
   alumno: AlumnoMock;
   grupoId: string;
   colorFranja: string;
-  forzarPeligro?: boolean;
 }
 
 export function AlumnoCardDraggable({
   alumno,
   grupoId,
   colorFranja,
-  forzarPeligro = false,
 }: AlumnoCardDraggableProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `alumno-${alumno.id}`,
@@ -47,12 +45,7 @@ export function AlumnoCardDraggable({
           borderRadius: 25,
         }}
       >
-        <MiembroCard
-          alumno={alumno}
-          grupoId={grupoId}
-          colorFranja={colorFranja}
-          forzarPeligro={forzarPeligro}
-        />
+        <MiembroCard alumno={alumno} grupoId={grupoId} colorFranja={colorFranja} />
       </div>
     </div>
   );

@@ -19,7 +19,6 @@ import {
   quitarAlumnoDeGrupo,
   type CreateAlumnoPayload,
 } from "@/lib/api/segurinite";
-import { obtenerAlumnosEnRiesgoIds } from "@/lib/simulacion/alumnos-riesgo";
 import { ToastNotificacion, type ToastData } from "@/components/ui/toast";
 import {
   FormularioRegistro,
@@ -42,7 +41,6 @@ interface IntegrantesListaProps {
  */
 export function IntegrantesLista({ alumnos, grupoId, colorFranja }: IntegrantesListaProps) {
   const router = useRouter();
-  const alumnosEnRiesgoIds = obtenerAlumnosEnRiesgoIds(grupoId, alumnos);
   const alumnosPorId = useMemo(
     () => new Map(alumnos.map((alumno) => [alumno.id, alumno])),
     [alumnos],
@@ -214,7 +212,6 @@ export function IntegrantesLista({ alumnos, grupoId, colorFranja }: IntegrantesL
                   alumno={alumno}
                   grupoId={grupoId}
                   colorFranja={colorFranja}
-                  forzarPeligro={alumnosEnRiesgoIds.has(alumno.id)}
                 />
               ))}
             </div>
@@ -242,7 +239,6 @@ export function IntegrantesLista({ alumnos, grupoId, colorFranja }: IntegrantesL
                 alumno={alumnoDragging}
                 grupoId={grupoId}
                 colorFranja={colorFranja}
-                forzarPeligro={alumnosEnRiesgoIds.has(alumnoDragging.id)}
               />
             </div>
           ) : null}

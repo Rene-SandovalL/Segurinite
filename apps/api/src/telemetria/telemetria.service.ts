@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TimescaleService } from '../../prisma/timescale.service';
 import { PulseraTelemetriaDto } from './dto/pulsera-telemetria.dto';
+import { TelemetriaGateway } from './telemetria.gateway';
 
 const THROTTLE_MS = 5000;
 
@@ -13,6 +14,7 @@ export class TelemetriaService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly timescale: TimescaleService,
+    private readonly gateway: TelemetriaGateway,
   ) {}
 
   async procesarTelemetria(dto: PulseraTelemetriaDto): Promise<void> {
@@ -53,6 +55,14 @@ export class TelemetriaService {
         ultimo_spo2: dto.spo2,
         ultima_temp: dto.temp,
       },
+    });
+
+    this.gateway.emitTelemetriaUpdate({
+      alumnoId: alumnoId.toString(),
+      beaconId,
+      bpm: dto.bpm,
+      spo2: dto.spo2,
+      temp: dto.temp,
     });
 
     await this.timescale.$executeRaw`

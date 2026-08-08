@@ -37,6 +37,11 @@ export class GruposController {
     return this.alumnosService.findByGrupoId(grupoId);
   }
 
+  @Get(':grupoId/alumnos-mapa')
+  findAlumnosMapaByGrupoId(@Param('grupoId', ParseIntPipe) grupoId: number) {
+    return this.alumnosService.findMapaByGrupoId(grupoId);
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.gruposService.findOne(id);

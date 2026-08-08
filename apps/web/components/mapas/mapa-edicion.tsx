@@ -12,19 +12,14 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { actualizarPosicionBeacon } from "@/lib/api/segurinite";
-import type { AlumnoMock } from "@/lib/mock/alumnos";
+import {
+  actualizarPosicionBeacon,
+  type AlumnoMapaMock,
+} from "@/lib/api/segurinite";
 import type { BeaconMock } from "@/lib/mock/beacons";
 import type { MapaConBeaconsMock } from "@/lib/mock/mapas";
 import type { ZonaMock } from "@/lib/mock/zonas";
-import {
-  colorTextoSegunFondo,
-  generarMarcadores,
-  simularHeartRate,
-  simularTemperatura,
-  type MarcadorMapa,
-} from "@/lib/simulacion/mapa-marcadores";
-import { resolverColorHex } from "@/lib/mock/grupos";
+import { useTelemetriaSocket } from "@/hooks/useTelemetriaSocket";
 import { ToastNotificacion, type ToastData } from "@/components/ui/toast";
 
 const COLOR_BEACON_PREDETERMINADO = "#575EAA";
@@ -33,10 +28,9 @@ interface MapaEdicionProps {
   mapa: MapaConBeaconsMock;
   beaconsSinPosicionIniciales: BeaconMock[];
   zonas: ZonaMock[];
-  /** Solo se muestran alumnos simulados si se pasan estos tres — pensado para /groups/[grupoId]/mapa */
+  /** Solo se dibujan alumnos si se pasan ambos — pensado para /groups/[grupoId]/mapa */
   grupoId?: string;
-  alumnosSimulados?: AlumnoMock[];
-  colorGrupo?: string;
+  alumnosMapa?: AlumnoMapaMock[];
 }
 
 interface BeaconMarcadorProps {
@@ -45,25 +39,33 @@ interface BeaconMarcadorProps {
   onHoverChange: (beaconId: number | null) => void;
 }
 
-interface DetallesAlumnoHover {
+interface AlumnoPosicionado {
   alumnoId: string;
-  nombreCompleto: string;
-  heartRate: number;
-  temperatura: string;
-  fueraDeRango: boolean;
+  nombre: string;
+  estado: "normal" | "alerta" | "peligro";
+  bpm: number | null;
+  spo2: number | null;
+  temp: number | null;
+  x: number;
+  y: number;
 }
 
 function etiquetaBeacon(beacon: BeaconMock): string {
   return beacon.nombre ?? `Beacon ${beacon.beaconId}`;
 }
 
-function nombreAlumno(alumno: AlumnoMock): string {
-  const nombre = alumno.nombreCompleto?.trim();
-  if (nombre) {
-    return nombre;
-  }
+function inicialesDeNombre(nombre: string): string {
+  const partes = nombre.trim().split(/\s+/);
+  const primero = partes[0]?.charAt(0) ?? "";
+  const segundo = partes[1]?.charAt(0) ?? "";
+  return `${primero}${segundo}`.toUpperCase();
+}
 
-  return `${alumno.nombre} ${alumno.apellido}`.trim();
+/** Offset en % alrededor de un beacon para que los alumnos no se encimen. */
+function calcularOffset(index: number, total: number): { dx: number; dy: number } {
+  const RADIO = 4.5;
+  const angulo = -Math.PI / 2 + (index / Math.max(total, 1)) * 2 * Math.PI;
+  return { dx: RADIO * Math.cos(angulo), dy: RADIO * Math.sin(angulo) };
 }
 
 function BeaconMarcadorDraggable({
@@ -175,8 +177,7 @@ export function MapaEdicion({
   beaconsSinPosicionIniciales,
   zonas,
   grupoId,
-  alumnosSimulados,
-  colorGrupo,
+  alumnosMapa,
 }: MapaEdicionProps) {
   const [modoEdicion, setModoEdicion] = useState(false);
   const [beaconsPosicionados, setBeaconsPosicionados] = useState<BeaconMock[]>(
@@ -184,6 +185,9 @@ export function MapaEdicion({
   );
   const [beaconsSinPosicion, setBeaconsSinPosicion] = useState<BeaconMock[]>(
     beaconsSinPosicionIniciales,
+  );
+  const [estadosAlumnos, setEstadosAlumnos] = useState<Map<string, AlumnoMapaMock>>(
+    () => new Map((alumnosMapa ?? []).map((alumno) => [alumno.alumnoId, alumno])),
   );
   const [beaconHoverId, setBeaconHoverId] = useState<number | null>(null);
   const [alumnoHoverId, setAlumnoHoverId] = useState<string | null>(null);
@@ -203,41 +207,88 @@ export function MapaEdicion({
     return todos.find((beacon) => beacon.id === beaconHoverId) ?? null;
   }, [beaconsPosicionados, beaconsSinPosicion, beaconHoverId]);
 
-  const mostrarAlumnosSimulados = Boolean(
-    grupoId && alumnosSimulados && colorGrupo,
+  const alumnoIdsDelGrupo = useMemo(
+    () => new Set((alumnosMapa ?? []).map((alumno) => alumno.alumnoId)),
+    [alumnosMapa],
   );
 
-  const marcadoresAlumnos: MarcadorMapa[] = useMemo(() => {
-    if (!mostrarAlumnosSimulados || !grupoId || !alumnosSimulados) {
-      return [];
+  useTelemetriaSocket((evento) => {
+    if (!alumnoIdsDelGrupo.has(evento.alumnoId)) {
+      return;
     }
 
-    return generarMarcadores(grupoId, alumnosSimulados);
-  }, [mostrarAlumnosSimulados, grupoId, alumnosSimulados]);
+    setEstadosAlumnos((actual) => {
+      const previo = actual.get(evento.alumnoId);
+      if (!previo) {
+        return actual;
+      }
 
-  const detallesPorAlumno = useMemo(() => {
-    const detalles = new Map<string, DetallesAlumnoHover>();
+      const actualizado = new Map(actual);
+      actualizado.set(evento.alumnoId, {
+        ...previo,
+        ultimoBeaconId: evento.beaconId,
+        ultimoBpm: evento.bpm,
+        ultimoSpo2: evento.spo2,
+        ultimaTemp: evento.temp,
+      });
+      return actualizado;
+    });
+  });
 
-    if (!grupoId) {
-      return detalles;
-    }
+  const beaconPosPorBeaconId = useMemo(() => {
+    const lookup = new Map<number, { x: number; y: number }>();
+    beaconsPosicionados.forEach((beacon) => {
+      if (beacon.posX !== null && beacon.posY !== null) {
+        lookup.set(beacon.beaconId, { x: beacon.posX * 100, y: beacon.posY * 100 });
+      }
+    });
+    return lookup;
+  }, [beaconsPosicionados]);
 
-    marcadoresAlumnos.forEach((marcador) => {
-      detalles.set(marcador.alumno.id, {
-        alumnoId: marcador.alumno.id,
-        nombreCompleto: nombreAlumno(marcador.alumno),
-        heartRate: simularHeartRate(grupoId, marcador.alumno.id, marcador.fueraDeRango),
-        temperatura: simularTemperatura(grupoId, marcador.alumno.id, marcador.fueraDeRango),
-        fueraDeRango: marcador.fueraDeRango,
+  const { alumnosPosicionados, alumnosSinUbicacion } = useMemo(() => {
+    const posicionados: AlumnoPosicionado[] = [];
+    const sinUbicacion: AlumnoMapaMock[] = [];
+    const porBeacon = new Map<number, AlumnoMapaMock[]>();
+
+    estadosAlumnos.forEach((alumno) => {
+      const beaconId = alumno.ultimoBeaconId;
+      if (beaconId === null || !beaconPosPorBeaconId.has(beaconId)) {
+        sinUbicacion.push(alumno);
+        return;
+      }
+
+      const lista = porBeacon.get(beaconId) ?? [];
+      lista.push(alumno);
+      porBeacon.set(beaconId, lista);
+    });
+
+    porBeacon.forEach((lista, beaconId) => {
+      const pos = beaconPosPorBeaconId.get(beaconId);
+      if (!pos) {
+        return;
+      }
+
+      lista.forEach((alumno, index) => {
+        const { dx, dy } = calcularOffset(index, lista.length);
+        posicionados.push({
+          alumnoId: alumno.alumnoId,
+          nombre: alumno.nombre,
+          estado: alumno.estado,
+          bpm: alumno.ultimoBpm,
+          spo2: alumno.ultimoSpo2,
+          temp: alumno.ultimaTemp,
+          x: Math.min(100, Math.max(0, pos.x + dx)),
+          y: Math.min(100, Math.max(0, pos.y + dy)),
+        });
       });
     });
 
-    return detalles;
-  }, [grupoId, marcadoresAlumnos]);
+    return { alumnosPosicionados: posicionados, alumnosSinUbicacion: sinUbicacion };
+  }, [estadosAlumnos, beaconPosPorBeaconId]);
 
-  const detallesAlumnoHover = alumnoHoverId ? detallesPorAlumno.get(alumnoHoverId) ?? null : null;
-  const fondoPanelAlumno = colorGrupo ? resolverColorHex(colorGrupo) : "#3A3A3A";
-  const colorTextoPanelAlumno = colorTextoSegunFondo(fondoPanelAlumno);
+  const alumnoHover = alumnoHoverId
+    ? alumnosPosicionados.find((alumno) => alumno.alumnoId === alumnoHoverId) ?? null
+    : null;
 
   async function guardarPosicion(beaconId: number, posX: number, posY: number) {
     try {
@@ -390,65 +441,64 @@ export function MapaEdicion({
             </div>
           )}
 
-          {!beaconHover && detallesAlumnoHover && (
+          {!beaconHover && alumnoHover && (
             <div
               className="absolute left-3 top-3 z-20 rounded-[14px]"
               style={{
-                background: `${fondoPanelAlumno}CC`,
-                color: colorTextoPanelAlumno,
+                background: "#3A3A3ACC",
+                color: "#fff",
                 padding: "14px 16px",
                 boxShadow: "0 4px 8px rgba(0,0,0,0.24)",
-                width: "min(460px, calc(100% - 24px))",
-                minHeight: 60,
+                width: "min(320px, calc(100% - 24px))",
               }}
             >
-              <p
-                className="font-bold"
-                style={{
-                  fontSize: 18,
-                  lineHeight: 1.2,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  flexWrap: "wrap",
-                }}
-              >
-                <span>{detallesAlumnoHover.nombreCompleto}</span>
-                <span style={{ fontSize: 15, fontWeight: 600 }}>
-                  FC: {detallesAlumnoHover.heartRate} bpm · Temp:{" "}
-                  {detallesAlumnoHover.temperatura}°C
-                </span>
+              <p className="font-bold" style={{ fontSize: 17, lineHeight: 1.3 }}>
+                {alumnoHover.nombre}
               </p>
               <p style={{ fontSize: 14, marginTop: 6, opacity: 0.9 }}>
-                {detallesAlumnoHover.fueraDeRango
-                  ? "Estado simulado: alerta"
-                  : "Estado simulado: normal"}
+                {alumnoHover.bpm != null ? `${alumnoHover.bpm} bpm` : "— bpm"} ·{" "}
+                {alumnoHover.spo2 != null ? `${alumnoHover.spo2}% SpO2` : "— SpO2"}
               </p>
+              <p style={{ fontSize: 14, opacity: 0.9 }}>
+                Temp: {alumnoHover.temp != null ? `${alumnoHover.temp}°C` : "—"}
+              </p>
+              <p style={{ fontSize: 14, opacity: 0.9 }}>Estado: {alumnoHover.estado}</p>
             </div>
           )}
 
-          {/* ── Marcadores de alumnos simulados (solo visual) ─── */}
+          {/* ── Alumnos posicionados por su último beacon ─────── */}
           {grupoId &&
-            marcadoresAlumnos.map((marcador) => {
-              const colorBorde = marcador.fueraDeRango ? "#E56363" : "#3A3A3A";
-              const sombra = marcador.fueraDeRango
-                ? "0 0 4px 4px #FF6060"
-                : "0 4px 4px 0 rgba(0,0,0,0.25)";
+            alumnosPosicionados.map((alumno) => {
+              const colorBorde =
+                alumno.estado === "peligro"
+                  ? "#E56363"
+                  : alumno.estado === "alerta"
+                    ? "#F5A623"
+                    : "#3A3A3A";
+              const sombra =
+                alumno.estado === "peligro"
+                  ? "0 0 4px 4px #FF6060"
+                  : "0 4px 4px 0 rgba(0,0,0,0.25)";
 
               return (
                 <Link
-                  key={marcador.alumno.id}
-                  href={`/groups/${grupoId}/alumnos/${marcador.alumno.id}`}
+                  key={alumno.alumnoId}
+                  href={`/groups/${grupoId}/alumnos/${alumno.alumnoId}`}
                   className="group absolute -translate-x-1/2 -translate-y-1/2 focus:outline-none"
-                  style={{ left: `${marcador.x}%`, top: `${marcador.y}%`, zIndex: 1 }}
-                  aria-label={`Ver información de ${nombreAlumno(marcador.alumno)}`}
-                  onMouseEnter={() => setAlumnoHoverId(marcador.alumno.id)}
+                  style={{
+                    left: `${alumno.x}%`,
+                    top: `${alumno.y}%`,
+                    zIndex: 1,
+                    transition: "left 0.6s ease, top 0.6s ease",
+                  }}
+                  aria-label={`Ver información de ${alumno.nombre}`}
+                  onMouseEnter={() => setAlumnoHoverId(alumno.alumnoId)}
                   onMouseLeave={() =>
-                    setAlumnoHoverId((actual) => (actual === marcador.alumno.id ? null : actual))
+                    setAlumnoHoverId((actual) => (actual === alumno.alumnoId ? null : actual))
                   }
-                  onFocus={() => setAlumnoHoverId(marcador.alumno.id)}
+                  onFocus={() => setAlumnoHoverId(alumno.alumnoId)}
                   onBlur={() =>
-                    setAlumnoHoverId((actual) => (actual === marcador.alumno.id ? null : actual))
+                    setAlumnoHoverId((actual) => (actual === alumno.alumnoId ? null : actual))
                   }
                 >
                   <span
@@ -463,7 +513,7 @@ export function MapaEdicion({
                       className="text-white font-normal select-none pointer-events-none opacity-0 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100"
                       style={{ fontSize: 14, lineHeight: 1 }}
                     >
-                      {marcador.alumno.iniciales}
+                      {inicialesDeNombre(alumno.nombre)}
                     </span>
                   </span>
                 </Link>
@@ -488,6 +538,37 @@ export function MapaEdicion({
             >
               {beaconsSinPosicion.map((beacon) => (
                 <BeaconTokenDraggable key={beacon.id} beacon={beacon} modoEdicion={modoEdicion} />
+              ))}
+            </div>
+          )}
+
+          {/* ── Alumnos sin ubicación (abajo a la derecha) ────── */}
+          {grupoId && alumnosSinUbicacion.length > 0 && (
+            <div
+              className="absolute right-3 bottom-3 z-20 flex flex-col overflow-y-auto"
+              style={{ gap: 8, maxHeight: "40%", maxWidth: "calc(100% - 24px)" }}
+            >
+              {alumnosSinUbicacion.map((alumno) => (
+                <div
+                  key={alumno.alumnoId}
+                  className="flex items-center"
+                  style={{
+                    gap: 10,
+                    border: "1px solid #3A3A3A",
+                    borderRadius: 12,
+                    padding: "8px 12px",
+                    background: "#fff",
+                    boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+                  }}
+                >
+                  <span
+                    className="shrink-0 rounded-full"
+                    style={{ width: 14, height: 14, background: "#575EAA", border: "1px solid #3A3A3A" }}
+                  />
+                  <span className="text-[#3A3A3A]" style={{ fontSize: 14, whiteSpace: "nowrap" }}>
+                    {alumno.nombre} — sin ubicación
+                  </span>
+                </div>
               ))}
             </div>
           )}

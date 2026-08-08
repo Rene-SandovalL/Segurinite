@@ -70,8 +70,32 @@ interface AlumnoApiResponse {
     uuid: string;
     estado: "DISPONIBLE" | "CONECTADA" | "REGISTRADA" | "ASIGNADA";
     lastSeenAt: string | null;
+    ultimoBeaconId: number | null;
+    ultimoBpm: number | null;
+    ultimoSpo2: number | null;
+    ultimaTemp: number | null;
   } | null;
   contactos: AlumnoContactoApiResponse[];
+}
+
+interface AlumnoMapaApiResponse {
+  alumnoId: string;
+  nombre: string;
+  estado: "normal" | "alerta" | "peligro";
+  ultimoBeaconId: number | null;
+  ultimoBpm: number | null;
+  ultimoSpo2: number | null;
+  ultimaTemp: number | null;
+}
+
+export interface AlumnoMapaMock {
+  alumnoId: string;
+  nombre: string;
+  estado: "normal" | "alerta" | "peligro";
+  ultimoBeaconId: number | null;
+  ultimoBpm: number | null;
+  ultimoSpo2: number | null;
+  ultimaTemp: number | null;
 }
 
 interface TutorCreateAlumnoPayload {
@@ -385,6 +409,14 @@ function mapAlumno(alumno: AlumnoApiResponse): AlumnoMock {
     idDispositivo: alumno.pulsera?.uuid,
     ultimaConexion: formatLastSeen(alumno.pulsera?.lastSeenAt ?? null),
     contactosEmergencia,
+    datosVitales: alumno.pulsera
+      ? {
+          spo2: alumno.pulsera.ultimoSpo2,
+          pulso: alumno.pulsera.ultimoBpm,
+          temperatura: alumno.pulsera.ultimaTemp,
+          ultimaLectura: formatLastSeen(alumno.pulsera.lastSeenAt) ?? null,
+        }
+      : undefined,
   };
 }
 
@@ -414,6 +446,10 @@ export async function getAlumnos(): Promise<AlumnoMock[]> {
 export async function getAlumnosByGrupo(grupoId: string): Promise<AlumnoMock[]> {
   const alumnos = await fetchApi<AlumnoApiResponse[]>(`/grupos/${grupoId}/alumnos`);
   return alumnos.map(mapAlumno);
+}
+
+export async function getAlumnosMapa(grupoId: string): Promise<AlumnoMapaMock[]> {
+  return fetchApi<AlumnoMapaApiResponse[]>(`/grupos/${grupoId}/alumnos-mapa`);
 }
 
 export async function asignarAlumnoAGrupo(

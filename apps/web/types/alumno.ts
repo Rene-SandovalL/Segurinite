@@ -20,11 +20,10 @@ export interface TutorAlumno {
 }
 
 export interface DatosVitales {
-  presionSys: number;
-  presionDia: number;
-  pulso: number;
-  temperatura: number;
-  ultimaLectura: string;
+  spo2: number | null;
+  pulso: number | null;
+  temperatura: number | null;
+  ultimaLectura: string | null;
 }
 
 /** Representa un Alumno dentro de un grupo */

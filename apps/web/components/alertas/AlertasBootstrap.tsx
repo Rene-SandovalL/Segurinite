@@ -1,44 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getAlumnos } from "@/lib/api/segurinite";
-import type { AlumnoMock } from "@/lib/mock/alumnos";
-import { useSimuladorAlertas } from "@/hooks/useSimuladorAlertas";
 import { AlertasContainer } from "./AlertasContainer";
 
+/**
+ * Monta el contenedor de toasts de alertas.
+ * La simulación (useSimuladorAlertas) se quitó — todavía no hay evaluación de
+ * umbrales real que dispare alertas, eso es trabajo aparte. Cuando exista, se
+ * conecta acá (vía el mismo WebSocket de telemetría u otro evento dedicado).
+ */
 export function AlertasBootstrap() {
-  const [alumnos, setAlumnos] = useState<AlumnoMock[]>([]);
-
-  useSimuladorAlertas(alumnos);
-
-  useEffect(() => {
-    let activo = true;
-
-    const cargarAlumnos = async () => {
-      try {
-        const respuesta = await getAlumnos();
-
-        if (!activo) {
-          return;
-        }
-
-        setAlumnos(respuesta);
-      } catch {
-        // En simulación ignoramos errores puntuales y reintentamos con el siguiente intervalo.
-      }
-    };
-
-    void cargarAlumnos();
-
-    const intervalId = window.setInterval(() => {
-      void cargarAlumnos();
-    }, 45000);
-
-    return () => {
-      activo = false;
-      window.clearInterval(intervalId);
-    };
-  }, []);
-
   return <AlertasContainer />;
 }

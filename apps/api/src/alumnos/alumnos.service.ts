@@ -41,6 +41,10 @@ interface AlumnoWithRelations {
     uuid: string;
     estado: pulseras_estado;
     last_seen_at: Date | null;
+    ultimo_beacon_id: number | null;
+    ultimo_bpm: number | null;
+    ultimo_spo2: Prisma.Decimal | null;
+    ultima_temp: Prisma.Decimal | null;
   } | null;
   alumno_contactos: Array<{
     tipo: alumno_contactos_tipo;
@@ -51,6 +55,16 @@ interface AlumnoWithRelations {
     fecha_nacimiento: Date | null;
     direccion: string | null;
   }>;
+}
+
+export interface AlumnoMapaResponse {
+  alumnoId: string;
+  nombre: string;
+  estado: alumnos_estado;
+  ultimoBeaconId: number | null;
+  ultimoBpm: number | null;
+  ultimoSpo2: number | null;
+  ultimaTemp: number | null;
 }
 
 export interface AlumnoResponse {
@@ -72,6 +86,10 @@ export interface AlumnoResponse {
     uuid: string;
     estado: pulseras_estado;
     lastSeenAt: string | null;
+    ultimoBeaconId: number | null;
+    ultimoBpm: number | null;
+    ultimoSpo2: number | null;
+    ultimaTemp: number | null;
   } | null;
   contactos: Array<{
     tipo: alumno_contactos_tipo;
@@ -112,6 +130,10 @@ const ALUMNO_SELECT: Prisma.alumnosSelect = {
       uuid: true,
       estado: true,
       last_seen_at: true,
+      ultimo_beacon_id: true,
+      ultimo_bpm: true,
+      ultimo_spo2: true,
+      ultima_temp: true,
     },
   },
   alumno_contactos: {
@@ -310,6 +332,14 @@ export class AlumnosService {
             uuid: alumno.pulseras.uuid,
             estado: alumno.pulseras.estado,
             lastSeenAt: this.mapDate(alumno.pulseras.last_seen_at),
+            ultimoBeaconId: alumno.pulseras.ultimo_beacon_id,
+            ultimoBpm: alumno.pulseras.ultimo_bpm,
+            ultimoSpo2: alumno.pulseras.ultimo_spo2
+              ? alumno.pulseras.ultimo_spo2.toNumber()
+              : null,
+            ultimaTemp: alumno.pulseras.ultima_temp
+              ? alumno.pulseras.ultima_temp.toNumber()
+              : null,
           }
         : null,
       contactos: alumno.alumno_contactos.map((contacto) => ({
@@ -425,6 +455,50 @@ export class AlumnosService {
     })) as AlumnoWithRelations[];
 
     return alumnos.map((alumno) => this.mapAlumno(alumno));
+  }
+
+  /**
+   * Alumnos con pulsera asignada Y con mac_address configurada — son los
+   * únicos que pueden reportar telemetría, así que son los únicos que tiene
+   * sentido dibujar en el mapa en tiempo real.
+   */
+  async findMapaByGrupoId(grupoId: number): Promise<AlumnoMapaResponse[]> {
+    const alumnos = await this.prisma.alumnos.findMany({
+      where: {
+        grupo_id: grupoId,
+        pulsera_id: { not: null },
+        pulseras: { mac_address: { not: null } },
+      },
+      select: {
+        id: true,
+        nombre: true,
+        apellido: true,
+        estado: true,
+        pulseras: {
+          select: {
+            ultimo_beacon_id: true,
+            ultimo_bpm: true,
+            ultimo_spo2: true,
+            ultima_temp: true,
+          },
+        },
+      },
+      orderBy: { id: 'asc' },
+    });
+
+    return alumnos.map((alumno) => ({
+      alumnoId: alumno.id.toString(),
+      nombre: `${alumno.nombre} ${alumno.apellido}`,
+      estado: alumno.estado,
+      ultimoBeaconId: alumno.pulseras?.ultimo_beacon_id ?? null,
+      ultimoBpm: alumno.pulseras?.ultimo_bpm ?? null,
+      ultimoSpo2: alumno.pulseras?.ultimo_spo2
+        ? alumno.pulseras.ultimo_spo2.toNumber()
+        : null,
+      ultimaTemp: alumno.pulseras?.ultima_temp
+        ? alumno.pulseras.ultima_temp.toNumber()
+        : null,
+    }));
   }
 
   async findOne(id: number): Promise<AlumnoResponse> {
