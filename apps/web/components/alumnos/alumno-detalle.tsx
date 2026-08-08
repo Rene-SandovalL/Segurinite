@@ -16,7 +16,11 @@ export function AlumnoDetalle({ alumno }: AlumnoDetalleProps) {
   return (
     <div className="flex h-full w-full overflow-hidden rounded-[25px]">
       <AlumnoInfoPersonal alumno={alumno} />
-      <AlumnoVitales alumnoId={alumno.id} vitalesIniciales={alumno.datosVitales} />
+      <AlumnoVitales
+        alumnoId={alumno.id}
+        vitalesIniciales={alumno.datosVitales}
+        fotoUrlInicial={alumno.fotoUrl}
+      />
     </div>
   );
 }

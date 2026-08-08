@@ -10,6 +10,7 @@ import type { PulseraMock } from "@/lib/mock/pulseras";
 import type { ZonaMock } from "@/lib/mock/zonas";
 import type { EstadoPulsera } from "@/types/pulsera";
 import type { TipoZona } from "@/types/zona";
+import type { DocenteGrupo } from "@/types/usuario";
 import { apiFetch, ApiHttpError } from "./client";
 
 interface GrupoColorApiResponse {
@@ -58,6 +59,7 @@ interface AlumnoApiResponse {
   fechaNacimiento: string | null;
   tipoSangre: string | null;
   estado: "normal" | "alerta" | "peligro";
+  fotoUrl: string | null;
   grupo: {
     id: number;
     nombre: string;
@@ -397,6 +399,7 @@ function mapAlumno(alumno: AlumnoApiResponse): AlumnoMock {
       ? resolverColorHex(alumno.grupo.colorHex)
       : undefined,
     estado: alumno.estado,
+    fotoUrl: alumno.fotoUrl ?? undefined,
     nombreCompleto: `${alumno.nombre} ${alumno.apellido}`,
     edad: ageFromDate(alumno.fechaNacimiento),
     fechaNacimiento: formatDate(alumno.fechaNacimiento),
@@ -450,6 +453,37 @@ export async function getAlumnosByGrupo(grupoId: string): Promise<AlumnoMock[]> 
 
 export async function getAlumnosMapa(grupoId: string): Promise<AlumnoMapaMock[]> {
   return fetchApi<AlumnoMapaApiResponse[]>(`/grupos/${grupoId}/alumnos-mapa`);
+}
+
+interface DocenteApiResponse {
+  id: number;
+  nombre: string;
+  fechaNacimiento: string | null;
+  rfc: string | null;
+  telefono: string | null;
+  correo: string | null;
+  observaciones: string | null;
+  fotoUrl: string | null;
+  grupoId: number | null;
+}
+
+function mapDocente(docente: DocenteApiResponse): DocenteGrupo {
+  return {
+    id: docente.id,
+    nombre: docente.nombre,
+    fechaNacimiento: formatDate(docente.fechaNacimiento) ?? null,
+    rfc: docente.rfc,
+    telefono: docente.telefono,
+    correo: docente.correo,
+    observaciones: docente.observaciones,
+    fotoUrl: docente.fotoUrl,
+    grupoId: docente.grupoId,
+  };
+}
+
+export async function getDocenteByGrupo(grupoId: string): Promise<DocenteGrupo | undefined> {
+  const docente = await fetchApi<DocenteApiResponse | null>(`/grupos/${grupoId}/docente`);
+  return docente ? mapDocente(docente) : undefined;
 }
 
 export async function asignarAlumnoAGrupo(

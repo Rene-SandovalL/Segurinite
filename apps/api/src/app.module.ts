@@ -14,6 +14,8 @@ import { MapasModule } from './mapas/mapas.module';
 import { BeaconsModule } from './beacons/beacons.module';
 import { BeaconsConfigModule } from './beacons-config/beacons-config.module';
 import { PulserasConfigModule } from './pulseras-config/pulseras-config.module';
+import { UsuariosModule } from './usuarios/usuarios.module';
+import { DocentesModule } from './docentes/docentes.module';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { PulserasConfigModule } from './pulseras-config/pulseras-config.module';
     BeaconsModule,
     BeaconsConfigModule,
     PulserasConfigModule,
+    UsuariosModule,
+    DocentesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

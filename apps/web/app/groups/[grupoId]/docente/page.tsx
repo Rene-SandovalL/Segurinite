@@ -1,9 +1,8 @@
 import { notFound } from "next/navigation";
-import { getDocenteByGrupo } from "@/lib/mock/docentes";
 import { GrupoHeader } from "@/components/grupos/grupo-header";
 import { TabBar } from "@/components/grupos/tab-bar";
 import { DocentePerfil } from "@/components/docente/docente-perfil";
-import { getGrupoById } from "@/lib/api/segurinite";
+import { getDocenteByGrupo, getGrupoById } from "@/lib/api/segurinite";
 
 interface Props {
   params: Promise<{ grupoId: string }>;
@@ -16,10 +15,11 @@ interface Props {
 export default async function DocentePage({ params }: Props) {
   const { grupoId } = await params;
 
-  const grupo = await getGrupoById(grupoId);
+  const [grupo, docente] = await Promise.all([
+    getGrupoById(grupoId),
+    getDocenteByGrupo(grupoId),
+  ]);
   if (!grupo) notFound();
-
-  const docente = getDocenteByGrupo(grupoId);
 
   return (
     <>

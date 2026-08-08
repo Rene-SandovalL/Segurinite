@@ -2,8 +2,11 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { randomUUID } from 'crypto';
+import { extname } from 'path';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   Prisma,
@@ -12,12 +15,16 @@ import {
   alumnos_tipo_sangre,
   pulseras_estado,
 } from '../generated/prisma/client';
+import { SupabaseService } from '../supabase/supabase.service';
 import {
   ContactoEmergenciaCreateAlumnoDto,
   CreateAlumnoDto,
   TutorCreateAlumnoDto,
 } from './dto/create-alumno.dto';
 import { UpdateAlumnoDto } from './dto/update-alumno.dto';
+
+const FOTO_BUCKET = 'usuarios';
+const FOTO_SUBCARPETA = 'alumnos';
 
 interface AlumnoWithRelations {
   id: bigint;
@@ -26,6 +33,7 @@ interface AlumnoWithRelations {
   fecha_nacimiento: Date | null;
   tipo_sangre: alumnos_tipo_sangre | null;
   estado: alumnos_estado;
+  foto_url: string | null;
   grupos: {
     id: number;
     nombre: string;
@@ -74,6 +82,7 @@ export interface AlumnoResponse {
   fechaNacimiento: string | null;
   tipoSangre: string | null;
   estado: alumnos_estado;
+  fotoUrl: string | null;
   grupo: {
     id: number;
     nombre: string;
@@ -110,6 +119,7 @@ const ALUMNO_SELECT: Prisma.alumnosSelect = {
   fecha_nacimiento: true,
   tipo_sangre: true,
   estado: true,
+  foto_url: true,
   grupos: {
     select: {
       id: true,
@@ -152,7 +162,10 @@ const ALUMNO_SELECT: Prisma.alumnosSelect = {
 
 @Injectable()
 export class AlumnosService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly supabase: SupabaseService,
+  ) {}
 
   private static readonly BLOOD_TYPE_FROM_INPUT: Record<
     string,
@@ -317,6 +330,7 @@ export class AlumnosService {
       fechaNacimiento: this.mapDate(alumno.fecha_nacimiento),
       tipoSangre: this.mapTipoSangre(alumno.tipo_sangre),
       estado: alumno.estado,
+      fotoUrl: alumno.foto_url,
       grupo: alumno.grupos
         ? {
             id: alumno.grupos.id,
@@ -624,5 +638,89 @@ export class AlumnosService {
     })) as AlumnoWithRelations;
 
     return this.mapAlumno(alumnoActualizado);
+  }
+
+  async subirFoto(
+    id: number,
+    file: Express.Multer.File | undefined,
+  ): Promise<{ fotoUrl: string }> {
+    if (!file) {
+      throw new BadRequestException('Falta el archivo de la foto');
+    }
+
+    const alumnoId = BigInt(id);
+    const alumno = await this.prisma.alumnos.findUnique({
+      where: { id: alumnoId },
+      select: { foto_url: true },
+    });
+
+    if (!alumno) {
+      throw new NotFoundException(`No existe alumno con id ${id}`);
+    }
+
+    if (alumno.foto_url) {
+      await this.eliminarArchivoFoto(alumno.foto_url);
+    }
+
+    const extension = extname(file.originalname);
+    const nombreArchivo = `${FOTO_SUBCARPETA}/${randomUUID()}${extension}`;
+
+    const { error: errorSubida } = await this.supabase.client.storage
+      .from(FOTO_BUCKET)
+      .upload(nombreArchivo, file.buffer, { contentType: file.mimetype });
+
+    if (errorSubida) {
+      throw new InternalServerErrorException(
+        `No se pudo subir la foto: ${errorSubida.message}`,
+      );
+    }
+
+    const {
+      data: { publicUrl },
+    } = this.supabase.client.storage
+      .from(FOTO_BUCKET)
+      .getPublicUrl(nombreArchivo);
+
+    await this.prisma.alumnos.update({
+      where: { id: alumnoId },
+      data: { foto_url: publicUrl },
+    });
+
+    return { fotoUrl: publicUrl };
+  }
+
+  async eliminarFoto(id: number): Promise<{ fotoUrl: null }> {
+    const alumnoId = BigInt(id);
+    const alumno = await this.prisma.alumnos.findUnique({
+      where: { id: alumnoId },
+      select: { foto_url: true },
+    });
+
+    if (!alumno) {
+      throw new NotFoundException(`No existe alumno con id ${id}`);
+    }
+
+    if (alumno.foto_url) {
+      await this.eliminarArchivoFoto(alumno.foto_url);
+    }
+
+    await this.prisma.alumnos.update({
+      where: { id: alumnoId },
+      data: { foto_url: null },
+    });
+
+    return { fotoUrl: null };
+  }
+
+  private async eliminarArchivoFoto(fotoUrl: string): Promise<void> {
+    const marcador = `/object/public/${FOTO_BUCKET}/`;
+    const index = fotoUrl.indexOf(marcador);
+
+    if (index === -1) {
+      return;
+    }
+
+    const path = fotoUrl.slice(index + marcador.length);
+    await this.supabase.client.storage.from(FOTO_BUCKET).remove([path]);
   }
 }

@@ -65,6 +65,22 @@ export class TelemetriaService {
       temp: dto.temp,
     });
 
+    const fechaHoy = new Date(ahora.toISOString().slice(0, 10));
+
+    await this.prisma.asistencias.upsert({
+      where: { alumno_id_fecha: { alumno_id: alumnoId, fecha: fechaHoy } },
+      create: {
+        alumno_id: alumnoId,
+        fecha: fechaHoy,
+        primera_deteccion: ahora,
+        ultima_deteccion: ahora,
+        estado: 'PRESENTE',
+      },
+      update: {
+        ultima_deteccion: ahora,
+      },
+    });
+
     await this.timescale.$executeRaw`
       INSERT INTO telemetria (time, mac_address, alumno_id, beacon_id, bpm, spo2, temperatura)
       VALUES (now(), ${dto.mac}, ${alumnoId}, ${beaconId}, ${dto.bpm}, ${dto.spo2}, ${dto.temp})

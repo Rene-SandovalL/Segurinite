@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { GruposService } from './grupos.service';
 import { AlumnosService } from '../alumnos/alumnos.service';
+import { DocentesService } from '../docentes/docentes.service';
 import { CreateGrupoDto } from './dto/create-grupo.dto';
 import { JwtCookieAuthGuard } from '../auth/guards/jwt-cookie-auth.guard';
 
@@ -18,6 +19,7 @@ export class GruposController {
   constructor(
     private readonly gruposService: GruposService,
     private readonly alumnosService: AlumnosService,
+    private readonly docentesService: DocentesService,
   ) {}
 
   @Get()
@@ -40,6 +42,11 @@ export class GruposController {
   @Get(':grupoId/alumnos-mapa')
   findAlumnosMapaByGrupoId(@Param('grupoId', ParseIntPipe) grupoId: number) {
     return this.alumnosService.findMapaByGrupoId(grupoId);
+  }
+
+  @Get(':grupoId/docente')
+  findDocenteByGrupoId(@Param('grupoId', ParseIntPipe) grupoId: number) {
+    return this.docentesService.findByGrupoId(grupoId);
   }
 
   @Get(':id')

@@ -33,9 +33,12 @@ model alumnos {
   fecha_nacimiento DateTime?            @db.Date
   tipo_sangre      alumnos_tipo_sangre?
   estado           alumnos_estado       @default(normal)
+  foto_url         String?
   created_at       DateTime             @default(now()) @db.Timestamp(0)
   updated_at       DateTime             @default(now()) @db.Timestamp(0)
   alumno_contactos alumno_contactos[]
+  asistencias      asistencias[]
+  alertas          alertas[]
   grupos           grupos?              @relation(fields: [grupo_id], references: [id], map: "fk_alumnos_grupo")
   pulseras         pulseras?            @relation(fields: [pulsera_id], references: [id], map: "fk_alumnos_pulsera")
 
@@ -50,6 +53,7 @@ model grupos {
   alumnos    alumnos[]
   colores    colores   @relation(fields: [color_id], references: [id], map: "fk_grupos_color")
   zonas      zonas?
+  docentes   docentes?
 
   @@index([color_id], map: "idx_grupos_color_id")
 }
@@ -81,14 +85,17 @@ model pulseras {
 }
 
 model usuarios {
-  id                       BigInt       @id @default(autoincrement())
-  email                    String       @unique(map: "uq_usuarios_email") @db.VarChar(255)
-  password_hash            String       @db.VarChar(255)
-  rol                      usuarios_rol @default(ADMIN)
-  refresh_token_hash       String?      @db.VarChar(255)
-  refresh_token_expires_at DateTime?    @db.Timestamp(0)
-  created_at               DateTime     @default(now()) @db.Timestamp(0)
-  updated_at               DateTime     @default(now()) @db.Timestamp(0)
+  id                       BigInt        @id @default(autoincrement())
+  email                    String        @unique(map: "uq_usuarios_email") @db.VarChar(255)
+  password_hash            String        @db.VarChar(255)
+  rol                      usuarios_rol  @default(ADMIN)
+  refresh_token_hash       String?       @db.VarChar(255)
+  refresh_token_expires_at DateTime?     @db.Timestamp(0)
+  foto_url                 String?
+  created_at               DateTime      @default(now()) @db.Timestamp(0)
+  updated_at               DateTime      @default(now()) @db.Timestamp(0)
+  asistencias_confirmadas  asistencias[]
+  alertas_resueltas        alertas[]
 }
 
 enum pulseras_estado {
@@ -168,4 +175,74 @@ model beacons {
   @@index([zona_id], map: "idx_beacons_zona_id")
   @@index([mapa_id], map: "idx_beacons_mapa_id")
   @@index([color_id], map: "idx_beacons_color_id")
+}
+
+enum asistencia_estado {
+  PRESENTE
+  AUSENTE
+  TARDANZA
+}
+
+model asistencias {
+  id                BigInt            @id @default(autoincrement())
+  alumno_id         BigInt
+  fecha             DateTime          @db.Date
+  primera_deteccion DateTime?         @db.Timestamp(0)
+  ultima_deteccion  DateTime?         @db.Timestamp(0)
+  estado            asistencia_estado @default(AUSENTE)
+  confirmado_manual Boolean           @default(false)
+  confirmado_por    BigInt?
+  created_at        DateTime          @default(now()) @db.Timestamp(0)
+  updated_at        DateTime          @default(now()) @db.Timestamp(0)
+  alumnos           alumnos           @relation(fields: [alumno_id], references: [id], onDelete: Cascade, map: "fk_asistencias_alumno")
+  usuarios          usuarios?         @relation(fields: [confirmado_por], references: [id], onDelete: SetNull, map: "fk_asistencias_confirmado_por")
+
+  @@unique([alumno_id, fecha], map: "uq_asistencias_alumno_fecha")
+  @@index([fecha], map: "idx_asistencias_fecha")
+}
+
+enum alerta_tipo {
+  BPM_ALTO
+  BPM_BAJO
+  SPO2_BAJO
+  TEMP_ANOMALA
+  SIN_SENAL
+}
+
+enum alerta_severidad {
+  ALERTA
+  PELIGRO
+}
+
+model alertas {
+  id           BigInt           @id @default(autoincrement())
+  alumno_id    BigInt
+  tipo         alerta_tipo
+  severidad    alerta_severidad @default(ALERTA)
+  valor        Decimal?         @db.Decimal(5, 2)
+  beacon_id    Int?
+  created_at   DateTime         @default(now()) @db.Timestamp(0)
+  resuelta_at  DateTime?        @db.Timestamp(0)
+  resuelta_por BigInt?
+  notas        String?          @db.VarChar(255)
+  alumnos      alumnos          @relation(fields: [alumno_id], references: [id], onDelete: Cascade, map: "fk_alertas_alumno")
+  usuarios     usuarios?        @relation(fields: [resuelta_por], references: [id], onDelete: SetNull, map: "fk_alertas_resuelta_por")
+
+  @@index([alumno_id, created_at], map: "idx_alertas_alumno_created_at")
+  @@index([created_at], map: "idx_alertas_created_at")
+}
+
+model docentes {
+  id               Int       @id @default(autoincrement())
+  nombre           String    @db.VarChar(120)
+  fecha_nacimiento DateTime? @db.Date
+  rfc              String?   @db.VarChar(13)
+  telefono         String?   @db.VarChar(20)
+  correo           String?   @db.VarChar(255)
+  observaciones    String?   @db.VarChar(255)
+  foto_url         String?
+  grupo_id         Int?      @unique(map: "uq_docentes_grupo_id")
+  created_at       DateTime  @default(now()) @db.Timestamp(0)
+  updated_at       DateTime  @default(now()) @db.Timestamp(0)
+  grupos           grupos?   @relation(fields: [grupo_id], references: [id], map: "fk_docentes_grupo")
 }
