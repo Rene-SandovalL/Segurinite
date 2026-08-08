@@ -9,6 +9,11 @@ import { PulserasModule } from './pulseras/pulseras.module';
 import { ColoresModule } from './colores/colores.module';
 import { AuthModule } from './auth/auth.module';
 import { TelemetriaModule } from './telemetria/telemetria.module';
+import { ZonasModule } from './zonas/zonas.module';
+import { MapasModule } from './mapas/mapas.module';
+import { BeaconsModule } from './beacons/beacons.module';
+import { BeaconsConfigModule } from './beacons-config/beacons-config.module';
+import { PulserasConfigModule } from './pulseras-config/pulseras-config.module';
 
 @Module({
   imports: [
@@ -20,6 +25,11 @@ import { TelemetriaModule } from './telemetria/telemetria.module';
     ColoresModule,
     AuthModule,
     TelemetriaModule,
+    ZonasModule,
+    MapasModule,
+    BeaconsModule,
+    BeaconsConfigModule,
+    PulserasConfigModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -7,6 +7,16 @@ import { JwtCookieAuthGuard } from '../auth/guards/jwt-cookie-auth.guard';
 export class PulserasController {
   constructor(private readonly pulserasService: PulserasService) {}
 
+  @Get()
+  findAll() {
+    return this.pulserasService.findAll();
+  }
+
+  @Get('disponibles')
+  findDisponibles() {
+    return this.pulserasService.findDisponibles();
+  }
+
   @Get('conectadas')
   findConectadas() {
     return this.pulserasService.findConectadasDisponibles();

@@ -1,26 +1,46 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { GrupoHeader } from "@/components/grupos/grupo-header";
-import { MapaAlumnosSimulado } from "@/components/grupos/mapa-alumnos-simulado";
 import { TabBar } from "@/components/grupos/tab-bar";
-import { getAlumnosByGrupo, getGrupoById } from "@/lib/api/segurinite";
+import { MapaEdicion } from "@/components/mapas/mapa-edicion";
+import { SelectorMapa } from "@/components/mapas/selector-mapa";
+import {
+  getAlumnosByGrupo,
+  getBeaconsSinPosicion,
+  getGrupoById,
+  getMapaById,
+  getMapas,
+  getZonas,
+} from "@/lib/api/segurinite";
 
 interface Props {
   params: Promise<{ grupoId: string }>;
+  searchParams: Promise<{ mapaId?: string }>;
 }
 
 /**
  * /groups/[grupoId]/mapa — Pestaña "Mapa" del grupo.
- * Próximamente: visualización del mapa en tiempo real.
+ * Muestra el mapa real (subido en /admin/mapas) con los beacons ya
+ * posicionados. Los mapas no están ligados a un grupo, así que se puede
+ * elegir cuál mostrar con el selector.
  */
-export default async function MapaPage({ params }: Props) {
+export default async function MapaPage({ params, searchParams }: Props) {
   const { grupoId } = await params;
+  const { mapaId } = await searchParams;
 
-  const [grupo, alumnos] = await Promise.all([
+  const [grupo, mapas, alumnos] = await Promise.all([
     getGrupoById(grupoId),
+    getMapas(),
     getAlumnosByGrupo(grupoId),
   ]);
 
   if (!grupo) notFound();
+
+  const idSeleccionado = mapaId ? Number(mapaId) : mapas[0]?.id;
+
+  const [mapaSeleccionado, beaconsSinPosicion, zonas] = idSeleccionado
+    ? await Promise.all([getMapaById(idSeleccionado), getBeaconsSinPosicion(), getZonas()])
+    : [undefined, [], []];
 
   return (
     <>
@@ -30,9 +50,70 @@ export default async function MapaPage({ params }: Props) {
         className="flex-1 flex flex-col overflow-hidden"
         style={{ padding: "0 clamp(16px, 3.5vw, 51px) clamp(16px, 3.5vw, 51px)" }}
       >
-        <TabBar grupoId={grupoId} />
+        <div className="flex items-end justify-between shrink-0">
+          <TabBar grupoId={grupoId} />
 
-        <MapaAlumnosSimulado grupoId={grupoId} alumnos={alumnos} colorGrupo={grupo.color} />
+          <div className="flex items-center" style={{ gap: 12, paddingBottom: 18 }}>
+            {mapas.length > 0 && idSeleccionado !== undefined && (
+              <SelectorMapa mapas={mapas} mapaSeleccionadoId={idSeleccionado} />
+            )}
+
+            <Link
+              href="/admin/mapas/nuevo"
+              className="flex items-center justify-center no-underline font-normal text-[#3A3A3A]"
+              style={{
+                background: "#87D67B",
+                borderRadius: 25,
+                height: 44,
+                padding: "0 20px",
+                fontSize: 15,
+                boxShadow: "0 4px 4px 0 rgba(0,0,0,0.25)",
+              }}
+            >
+              + Nuevo mapa
+            </Link>
+
+            <Link
+              href="/admin/mapas"
+              className="flex items-center justify-center no-underline font-normal text-[#3A3A3A]"
+              style={{
+                background: "#D9D9D9",
+                borderRadius: 25,
+                height: 44,
+                padding: "0 20px",
+                fontSize: 15,
+                boxShadow: "0 4px 4px 0 rgba(0,0,0,0.25)",
+              }}
+            >
+              Administrar mapas
+            </Link>
+          </div>
+        </div>
+
+        <div
+          className="flex-1 overflow-hidden bg-white flex flex-col"
+          style={{ borderRadius: "0 25px 25px 25px" }}
+        >
+          {!mapaSeleccionado ? (
+            <div className="h-full flex items-center justify-center">
+              <p className="text-[#6A6A6A]" style={{ fontSize: 18 }}>
+                {mapas.length === 0
+                  ? "Todavía no hay mapas cargados. Subí uno para empezar."
+                  : "El mapa seleccionado no existe."}
+              </p>
+            </div>
+          ) : (
+            <MapaEdicion
+              key={mapaSeleccionado.id}
+              mapa={mapaSeleccionado}
+              beaconsSinPosicionIniciales={beaconsSinPosicion}
+              zonas={zonas}
+              grupoId={grupoId}
+              alumnosSimulados={alumnos}
+              colorGrupo={grupo.color}
+            />
+          )}
+        </div>
       </div>
     </>
   );

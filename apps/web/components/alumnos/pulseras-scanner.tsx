@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  getPulserasConectadas,
-  type PulseraConectada,
-} from "@/lib/api/segurinite";
+import { getPulserasDisponibles } from "@/lib/api/segurinite";
+import type { PulseraMock } from "@/lib/mock/pulseras";
 
 /** Ícono de Bluetooth (SVG extraído del Figma) */
 function IconoBluetooth() {
@@ -22,14 +20,13 @@ function IconoBluetooth() {
 }
 
 interface ItemPulseraProps {
-  pulsera: PulseraConectada;
+  pulsera: PulseraMock;
   onSeleccionar: (id: string) => void;
 }
 
 /** Ítem individual de pulsera: nombre + estado + ícono Bluetooth */
 function ItemPulsera({ pulsera, onSeleccionar }: ItemPulseraProps) {
-  const etiquetaEstado =
-    pulsera.estado === "CONECTADA" ? "Conectada" : pulsera.estado;
+  const identificador = pulsera.alias ?? pulsera.macAddress ?? pulsera.uuid;
 
   return (
     <button
@@ -45,62 +42,16 @@ function ItemPulsera({ pulsera, onSeleccionar }: ItemPulseraProps) {
       {/* Nombre y estado */}
       <div className="flex flex-col items-start">
         <span className="font-normal text-[#3A3A3A] leading-tight" style={{ fontSize: 20 }}>
-          {pulsera.identificador}
+          {identificador}
         </span>
         <span className="font-normal text-[#AAA] leading-none" style={{ fontSize: 14 }}>
-          {etiquetaEstado}
+          Disponible
         </span>
       </div>
 
       {/* Ícono Bluetooth */}
       <IconoBluetooth />
     </button>
-  );
-}
-
-interface SeccionPulserasProps {
-  titulo: string;
-  pulseras: PulseraConectada[];
-  onSeleccionar: (id: string) => void;
-  vacioTexto?: string;
-}
-
-/** Sección con etiqueta + panel gris + grid de pulseras */
-function SeccionPulseras({
-  titulo,
-  pulseras,
-  onSeleccionar,
-  vacioTexto,
-}: SeccionPulserasProps) {
-  return (
-    <div className="flex flex-col gap-2">
-      <span className="font-normal text-[#3A3A3A]" style={{ fontSize: "clamp(20px, 2.4vw, 32px)" }}>
-        {titulo}
-      </span>
-
-      <div
-        className="rounded-[25px] bg-[#D9D9D9]"
-        style={{ minHeight: 80, padding: 16 }}
-      >
-        {pulseras.length === 0 ? (
-          <p className="text-[#8A8A8A] text-center py-4" style={{ fontSize: 16 }}>
-            {vacioTexto ?? `No hay pulseras ${titulo.toLowerCase()} en este momento.`}
-          </p>
-        ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: 12,
-            }}
-          >
-            {pulseras.map((p) => (
-              <ItemPulsera key={p.id} pulsera={p} onSeleccionar={onSeleccionar} />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
   );
 }
 
@@ -111,11 +62,11 @@ interface PulserasScannerProps {
 
 /**
  * Pantalla 2 del flujo de registro.
- * Muestra pulseras conectadas y disponibles (datos mock).
+ * Muestra las pulseras registradas con estado DISPONIBLE (no asignadas a ningún alumno).
  * Al seleccionar una pulsera avanza a la Pantalla 3 (Formulario).
  */
 export function PulserasScanner({ onVolver, onSeleccionarPulsera }: PulserasScannerProps) {
-  const [pulserasConectadas, setPulserasConectadas] = useState<PulseraConectada[]>([]);
+  const [pulserasDisponibles, setPulserasDisponibles] = useState<PulseraMock[]>([]);
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState<string | null>(null);
 
@@ -127,19 +78,19 @@ export function PulserasScanner({ onVolver, onSeleccionarPulsera }: PulserasScan
       setErrorCarga(null);
 
       try {
-        const resultado = await getPulserasConectadas();
+        const resultado = await getPulserasDisponibles();
 
         if (!activa) {
           return;
         }
 
-        setPulserasConectadas(resultado);
+        setPulserasDisponibles(resultado);
       } catch {
         if (!activa) {
           return;
         }
 
-        setErrorCarga("No se pudieron cargar las pulseras conectadas.");
+        setErrorCarga("No se pudieron cargar las pulseras disponibles.");
       } finally {
         if (activa) {
           setCargando(false);
@@ -153,8 +104,6 @@ export function PulserasScanner({ onVolver, onSeleccionarPulsera }: PulserasScan
       activa = false;
     };
   }, []);
-
-  const pulserasDisponibles: PulseraConectada[] = [];
 
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
@@ -182,7 +131,7 @@ export function PulserasScanner({ onVolver, onSeleccionarPulsera }: PulserasScan
       >
         {cargando && (
           <div className="text-[#8A8A8A]" style={{ fontSize: 18 }}>
-            Cargando pulseras conectadas...
+            Cargando pulseras disponibles...
           </div>
         )}
 
@@ -192,19 +141,25 @@ export function PulserasScanner({ onVolver, onSeleccionarPulsera }: PulserasScan
           </div>
         )}
 
-        <SeccionPulseras
-          titulo="Conexiones"
-          pulseras={pulserasConectadas}
-          onSeleccionar={onSeleccionarPulsera}
-          vacioTexto="No hay pulseras conectadas y sin registrar en este momento."
-        />
+        <div className="flex flex-col gap-2">
+          <span className="font-normal text-[#3A3A3A]" style={{ fontSize: "clamp(20px, 2.4vw, 32px)" }}>
+            Disponibles
+          </span>
 
-        <SeccionPulseras
-          titulo="Disponibles"
-          pulseras={pulserasDisponibles}
-          onSeleccionar={onSeleccionarPulsera}
-          vacioTexto="Sin resultados por ahora."
-        />
+          <div className="rounded-[25px] bg-[#D9D9D9]" style={{ minHeight: 80, padding: 16 }}>
+            {pulserasDisponibles.length === 0 ? (
+              <p className="text-[#8A8A8A] text-center py-4" style={{ fontSize: 16 }}>
+                No hay pulseras disponibles en este momento.
+              </p>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+                {pulserasDisponibles.map((p) => (
+                  <ItemPulsera key={p.id} pulsera={p} onSeleccionar={onSeleccionarPulsera} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,9 +1,15 @@
 import type { AlumnoMock } from "@/lib/mock/alumnos";
+import type { BeaconMock } from "@/lib/mock/beacons";
 import {
   resolverColorHex,
   type GrupoColor,
   type GrupoMock,
 } from "@/lib/mock/grupos";
+import type { MapaConBeaconsMock, MapaMock } from "@/lib/mock/mapas";
+import type { PulseraMock } from "@/lib/mock/pulseras";
+import type { ZonaMock } from "@/lib/mock/zonas";
+import type { EstadoPulsera } from "@/types/pulsera";
+import type { TipoZona } from "@/types/zona";
 import { apiFetch, ApiHttpError } from "./client";
 
 interface GrupoColorApiResponse {
@@ -125,6 +131,115 @@ export interface PulseraConectada {
   uuid: string;
   estado: "DISPONIBLE" | "CONECTADA" | "REGISTRADA" | "ASIGNADA";
   conectada: boolean;
+}
+
+interface ZonaApiResponse {
+  id: number;
+  nombre: string;
+  tipo: TipoZona;
+  grupo: { id: number; nombre: string } | null;
+}
+
+interface MapaApiResponse {
+  id: number;
+  nombre: string;
+  imagenUrl: string;
+  createdAt: string;
+}
+
+interface BeaconApiResponse {
+  id: number;
+  beaconId: number;
+  zonaId: number;
+  mapaId: number | null;
+  macAddress: string | null;
+  nombre: string | null;
+  posX: number | null;
+  posY: number | null;
+  activo: boolean;
+  color: { id: number; nombre: string | null; valorHex: string } | null;
+}
+
+interface MapaConBeaconsApiResponse extends MapaApiResponse {
+  beacons: BeaconApiResponse[];
+}
+
+export interface CrearMapaPayload {
+  nombre: string;
+  archivo: File;
+}
+
+export interface ActualizarPosicionBeaconPayload {
+  posX: number;
+  posY: number;
+  mapaId?: number;
+}
+
+interface PulseraFullApiResponse {
+  id: string;
+  uuid: string;
+  alias: string | null;
+  estado: EstadoPulsera;
+  macAddress: string | null;
+  bateria: number | null;
+  lastSeenAt: string | null;
+}
+
+export interface PuertoSerial {
+  path: string;
+  manufacturer?: string;
+  serialNumber?: string;
+  pnpId?: string;
+  vendorId?: string;
+  productId?: string;
+}
+
+export interface ConectarPuertoResponse {
+  connected: boolean;
+  path: string;
+}
+
+export interface LecturaIdBeacon {
+  id: number | null;
+  raw: string;
+}
+
+export interface ComandoSerialResponse {
+  ok: boolean;
+  raw: string;
+}
+
+export interface ConfigSerialPulsera {
+  ssid: string;
+  broker: string;
+  port?: number;
+  mac: string;
+}
+
+export interface RegistrarBeaconPayload {
+  beaconId: number;
+  zonaId: number;
+  macAddress?: string;
+  nombre?: string;
+  colorId?: number;
+  mapaId?: number;
+}
+
+export interface ActualizarBeaconConfigPayload {
+  nombre?: string;
+  colorId?: number;
+  zonaId?: number;
+  mapaId?: number;
+}
+
+export interface RegistrarPulseraPayload {
+  macAddress: string;
+  alias?: string;
+}
+
+export interface ActualizarPulseraConfigPayload {
+  alias?: string;
+  estado?: EstadoPulsera;
 }
 
 async function fetchApi<T>(path: string, init?: RequestInit): Promise<T> {
@@ -395,4 +510,244 @@ export async function crearGrupo(payload: CreateGrupoPayload): Promise<GrupoMock
   });
 
   return mapGrupo(grupo);
+}
+
+function mapZona(zona: ZonaApiResponse): ZonaMock {
+  return {
+    id: zona.id,
+    nombre: zona.nombre,
+    tipo: zona.tipo,
+    grupo: zona.grupo,
+  };
+}
+
+function mapMapa(mapa: MapaApiResponse): MapaMock {
+  return {
+    id: mapa.id,
+    nombre: mapa.nombre,
+    imagenUrl: mapa.imagenUrl,
+    createdAt: mapa.createdAt,
+  };
+}
+
+function mapBeacon(beacon: BeaconApiResponse): BeaconMock {
+  return {
+    id: beacon.id,
+    beaconId: beacon.beaconId,
+    zonaId: beacon.zonaId,
+    mapaId: beacon.mapaId,
+    macAddress: beacon.macAddress,
+    nombre: beacon.nombre,
+    posX: beacon.posX,
+    posY: beacon.posY,
+    activo: beacon.activo,
+    color: beacon.color,
+  };
+}
+
+export async function getZonas(): Promise<ZonaMock[]> {
+  const zonas = await fetchApi<ZonaApiResponse[]>("/zonas");
+  return zonas.map(mapZona);
+}
+
+export async function getMapas(): Promise<MapaMock[]> {
+  const mapas = await fetchApi<MapaApiResponse[]>("/mapas");
+  return mapas.map(mapMapa);
+}
+
+export async function getMapaById(
+  mapaId: number,
+): Promise<MapaConBeaconsMock | undefined> {
+  try {
+    const mapa = await fetchApi<MapaConBeaconsApiResponse>(`/mapas/${mapaId}`);
+    return {
+      ...mapMapa(mapa),
+      beacons: mapa.beacons.map(mapBeacon),
+    };
+  } catch (error) {
+    if (error instanceof ApiHttpError && error.status === 404) {
+      return undefined;
+    }
+
+    throw error;
+  }
+}
+
+export async function crearMapa(payload: CrearMapaPayload): Promise<MapaMock> {
+  const formData = new FormData();
+  formData.append("nombre", payload.nombre);
+  formData.append("archivo", payload.archivo);
+
+  const mapa = await fetchApi<MapaApiResponse>("/mapas", {
+    method: "POST",
+    body: formData,
+  });
+
+  return mapMapa(mapa);
+}
+
+export async function getBeacons(): Promise<BeaconMock[]> {
+  const beacons = await fetchApi<BeaconApiResponse[]>("/beacons");
+  return beacons.map(mapBeacon);
+}
+
+export async function getBeaconsSinPosicion(): Promise<BeaconMock[]> {
+  const beacons = await fetchApi<BeaconApiResponse[]>("/beacons/sin-posicion");
+  return beacons.map(mapBeacon);
+}
+
+export async function actualizarPosicionBeacon(
+  beaconId: number,
+  payload: ActualizarPosicionBeaconPayload,
+): Promise<BeaconMock> {
+  const beacon = await fetchApi<BeaconApiResponse>(`/beacons/${beaconId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+
+  return mapBeacon(beacon);
+}
+
+function mapPulsera(pulsera: PulseraFullApiResponse): PulseraMock {
+  return {
+    id: pulsera.id,
+    uuid: pulsera.uuid,
+    alias: pulsera.alias,
+    estado: pulsera.estado,
+    macAddress: pulsera.macAddress,
+    bateria: pulsera.bateria,
+    lastSeenAt: pulsera.lastSeenAt,
+  };
+}
+
+export async function getPulseras(): Promise<PulseraMock[]> {
+  const pulseras = await fetchApi<PulseraFullApiResponse[]>("/pulseras");
+  return pulseras.map(mapPulsera);
+}
+
+export async function getPulserasDisponibles(): Promise<PulseraMock[]> {
+  const pulseras = await fetchApi<PulseraFullApiResponse[]>("/pulseras/disponibles");
+  return pulseras.map(mapPulsera);
+}
+
+export async function registrarBeacon(
+  payload: RegistrarBeaconPayload,
+): Promise<BeaconMock> {
+  const beacon = await fetchApi<BeaconApiResponse>("/beacons-config/registrar", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+  return mapBeacon(beacon);
+}
+
+export async function actualizarBeaconConfig(
+  beaconId: number,
+  payload: ActualizarBeaconConfigPayload,
+): Promise<BeaconMock> {
+  const beacon = await fetchApi<BeaconApiResponse>(`/beacons-config/${beaconId}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+
+  return mapBeacon(beacon);
+}
+
+export async function registrarPulsera(
+  payload: RegistrarPulseraPayload,
+): Promise<PulseraMock> {
+  const pulsera = await fetchApi<PulseraFullApiResponse>("/pulseras-config/registrar", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+  return mapPulsera(pulsera);
+}
+
+export async function actualizarPulseraConfig(
+  pulseraId: string,
+  payload: ActualizarPulseraConfigPayload,
+): Promise<PulseraMock> {
+  const pulsera = await fetchApi<PulseraFullApiResponse>(
+    `/pulseras-config/${pulseraId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+  );
+
+  return mapPulsera(pulsera);
+}
+
+export async function listarPuertosBeacon(): Promise<PuertoSerial[]> {
+  return fetchApi<PuertoSerial[]>("/beacons-config/ports");
+}
+
+export async function conectarPuertoBeacon(
+  path: string,
+): Promise<ConectarPuertoResponse> {
+  return fetchApi<ConectarPuertoResponse>("/beacons-config/connect", {
+    method: "POST",
+    body: JSON.stringify({ path }),
+  });
+}
+
+export async function desconectarPuertoBeacon(): Promise<{ connected: boolean }> {
+  return fetchApi<{ connected: boolean }>("/beacons-config/disconnect", {
+    method: "POST",
+  });
+}
+
+export async function leerIdBeacon(): Promise<LecturaIdBeacon> {
+  return fetchApi<LecturaIdBeacon>("/beacons-config/id");
+}
+
+export async function asignarIdBeacon(id: number): Promise<ComandoSerialResponse> {
+  return fetchApi<ComandoSerialResponse>("/beacons-config/id", {
+    method: "POST",
+    body: JSON.stringify({ id }),
+  });
+}
+
+export async function listarPuertosPulsera(): Promise<PuertoSerial[]> {
+  return fetchApi<PuertoSerial[]>("/pulseras-config/ports");
+}
+
+export async function conectarPuertoPulsera(
+  path: string,
+): Promise<ConectarPuertoResponse> {
+  return fetchApi<ConectarPuertoResponse>("/pulseras-config/connect", {
+    method: "POST",
+    body: JSON.stringify({ path }),
+  });
+}
+
+export async function desconectarPuertoPulsera(): Promise<{ connected: boolean }> {
+  return fetchApi<{ connected: boolean }>("/pulseras-config/disconnect", {
+    method: "POST",
+  });
+}
+
+export async function leerConfigPulsera(): Promise<ConfigSerialPulsera> {
+  return fetchApi<ConfigSerialPulsera>("/pulseras-config/config");
+}
+
+export async function configurarWifiPulsera(
+  ssid: string,
+  password: string,
+): Promise<ComandoSerialResponse> {
+  return fetchApi<ComandoSerialResponse>("/pulseras-config/wifi", {
+    method: "POST",
+    body: JSON.stringify({ ssid, password }),
+  });
+}
+
+export async function configurarMqttPulsera(
+  broker: string,
+  port: number,
+): Promise<ComandoSerialResponse> {
+  return fetchApi<ComandoSerialResponse>("/pulseras-config/mqtt", {
+    method: "POST",
+    body: JSON.stringify({ broker, port }),
+  });
 }

@@ -347,9 +347,9 @@ export class AlumnosService {
         );
       }
 
-      if (pulsera.estado !== pulseras_estado.CONECTADA) {
+      if (pulsera.estado !== pulseras_estado.DISPONIBLE) {
         throw new BadRequestException(
-          'La pulsera seleccionada no está en estado CONECTADA',
+          'La pulsera seleccionada no está en estado DISPONIBLE',
         );
       }
 
@@ -392,7 +392,7 @@ export class AlumnosService {
           id: pulseraId,
         },
         data: {
-          estado: pulseras_estado.REGISTRADA,
+          estado: pulseras_estado.ASIGNADA,
         },
       });
 

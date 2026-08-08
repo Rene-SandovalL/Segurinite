@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
 function esRutaProtegida(pathname: string): boolean {
-  return pathname === "/" || pathname.startsWith("/groups");
+  return (
+    pathname === "/" ||
+    pathname.startsWith("/groups") ||
+    pathname.startsWith("/admin")
+  );
 }
 
 export function middleware(request: NextRequest) {

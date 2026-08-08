@@ -9,6 +9,7 @@ import {
   type GrupoMock,
 } from "@/lib/mock/grupos";
 import { logoutAdmin } from "@/lib/api/auth";
+import { DispositivosPanel, type VistaDispositivos } from "@/components/dispositivos/dispositivos-panel";
 
 interface FondoDinamicoProps {
   children: React.ReactNode;
@@ -101,6 +102,7 @@ export function FondoDinamico({ children, grupos }: FondoDinamicoProps) {
   const router = useRouter();
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [cerrandoSesion, setCerrandoSesion] = useState(false);
+  const [vistaDispositivos, setVistaDispositivos] = useState<VistaDispositivos | null>(null);
   // La ruta es /groups/[grupoId]/... — el grupoId está en el segmento índice 2
   const segmentos = pathname.split("/");
   const grupoId = segmentos[2] ?? "";
@@ -117,6 +119,7 @@ export function FondoDinamico({ children, grupos }: FondoDinamicoProps) {
 
   useEffect(() => {
     setMenuAbierto(false);
+    setVistaDispositivos(null);
   }, [pathname]);
 
   const handleCerrarSesion = async () => {
@@ -158,7 +161,15 @@ export function FondoDinamico({ children, grupos }: FondoDinamicoProps) {
 
       {/* Contenido sobre el fondo */}
       <div className="relative z-10 flex-1 flex flex-col overflow-hidden">
-        {children}
+        {vistaDispositivos ? (
+          <DispositivosPanel
+            vista={vistaDispositivos}
+            onCambiarVista={setVistaDispositivos}
+            onSalir={() => setVistaDispositivos(null)}
+          />
+        ) : (
+          children
+        )}
       </div>
 
       <div
@@ -207,6 +218,13 @@ export function FondoDinamico({ children, grupos }: FondoDinamicoProps) {
 
             <div className="mt-4 space-y-4">
               <MenuDerechoButton label="Gestionar personal" />
+              <MenuDerechoButton
+                label="Dispositivos"
+                onClick={() => {
+                  setVistaDispositivos("menu");
+                  setMenuAbierto(false);
+                }}
+              />
               <MenuDerechoButton label="Configuración" />
               <MenuDerechoButton label="Soporte Técnico" />
             </div>

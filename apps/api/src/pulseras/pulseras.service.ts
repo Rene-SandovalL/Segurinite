@@ -1,6 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { pulseras_estado } from '../generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RegistrarPulseraDto } from './dto/registrar-pulsera.dto';
+import { UpdatePulseraConfigDto } from './dto/update-pulsera-config.dto';
 
 export interface PulseraConectadaResponse {
   id: string;
@@ -10,9 +17,39 @@ export interface PulseraConectadaResponse {
   conectada: boolean;
 }
 
+export interface PulseraResponse {
+  id: string;
+  uuid: string;
+  alias: string | null;
+  estado: pulseras_estado;
+  macAddress: string | null;
+  bateria: number | null;
+  lastSeenAt: Date | null;
+}
+
 @Injectable()
 export class PulserasService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private mapPulsera(pulsera: {
+    id: bigint;
+    uuid: string;
+    alias: string | null;
+    estado: pulseras_estado;
+    mac_address: string | null;
+    bateria: number | null;
+    last_seen_at: Date | null;
+  }): PulseraResponse {
+    return {
+      id: pulsera.id.toString(),
+      uuid: pulsera.uuid,
+      alias: pulsera.alias,
+      estado: pulsera.estado,
+      macAddress: pulsera.mac_address,
+      bateria: pulsera.bateria,
+      lastSeenAt: pulsera.last_seen_at,
+    };
+  }
 
   async findConectadasDisponibles(): Promise<PulseraConectadaResponse[]> {
     const pulseras = await this.prisma.pulseras.findMany({
@@ -38,5 +75,72 @@ export class PulserasService {
       estado: pulsera.estado,
       conectada: pulsera.estado === pulseras_estado.CONECTADA,
     }));
+  }
+
+  async findAll(): Promise<PulseraResponse[]> {
+    const pulseras = await this.prisma.pulseras.findMany({
+      orderBy: { id: 'asc' },
+    });
+
+    return pulseras.map((pulsera) => this.mapPulsera(pulsera));
+  }
+
+  async findDisponibles(): Promise<PulseraResponse[]> {
+    const pulseras = await this.prisma.pulseras.findMany({
+      where: {
+        estado: pulseras_estado.DISPONIBLE,
+        alumnos: null,
+      },
+      orderBy: { id: 'asc' },
+    });
+
+    return pulseras.map((pulsera) => this.mapPulsera(pulsera));
+  }
+
+  async registrarDesdeSerial(
+    registrarPulseraDto: RegistrarPulseraDto,
+  ): Promise<PulseraResponse> {
+    const macEnUso = await this.prisma.pulseras.findUnique({
+      where: { mac_address: registrarPulseraDto.macAddress },
+      select: { id: true },
+    });
+
+    if (macEnUso) {
+      throw new ConflictException(
+        'Ya existe una pulsera registrada con esa mac_address',
+      );
+    }
+
+    const pulsera = await this.prisma.pulseras.create({
+      data: {
+        uuid: randomUUID(),
+        mac_address: registrarPulseraDto.macAddress,
+        alias: registrarPulseraDto.alias ?? null,
+        estado: pulseras_estado.DISPONIBLE,
+      },
+    });
+
+    return this.mapPulsera(pulsera);
+  }
+
+  async updateConfiguracion(
+    id: bigint,
+    updatePulseraConfigDto: UpdatePulseraConfigDto,
+  ): Promise<PulseraResponse> {
+    const pulsera = await this.prisma.pulseras.findUnique({ where: { id } });
+
+    if (!pulsera) {
+      throw new NotFoundException(`No existe pulsera con id ${id}`);
+    }
+
+    const actualizada = await this.prisma.pulseras.update({
+      where: { id },
+      data: {
+        alias: updatePulseraConfigDto.alias,
+        estado: updatePulseraConfigDto.estado,
+      },
+    });
+
+    return this.mapPulsera(actualizada);
   }
 }
