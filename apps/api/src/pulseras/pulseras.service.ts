@@ -85,10 +85,18 @@ export class PulserasService {
     return pulseras.map((pulsera) => this.mapPulsera(pulsera));
   }
 
+  /**
+   * Pulseras listas para asignarse a un alumno nuevo: ya reportaron su
+   * mac_address real (CONECTADA) y todavía no están vinculadas a nadie.
+   * El filtro por mac_address is-not-null es defensivo — por diseño toda
+   * pulsera CONECTADA ya tiene mac_address, pero evita listar una fila
+   * inconsistente si algún dato quedó mal cargado.
+   */
   async findDisponibles(): Promise<PulseraResponse[]> {
     const pulseras = await this.prisma.pulseras.findMany({
       where: {
-        estado: pulseras_estado.DISPONIBLE,
+        estado: pulseras_estado.CONECTADA,
+        mac_address: { not: null },
         alumnos: null,
       },
       orderBy: { id: 'asc' },
@@ -116,7 +124,7 @@ export class PulserasService {
         uuid: randomUUID(),
         mac_address: registrarPulseraDto.macAddress,
         alias: registrarPulseraDto.alias ?? null,
-        estado: pulseras_estado.DISPONIBLE,
+        estado: pulseras_estado.CONECTADA,
       },
     });
 

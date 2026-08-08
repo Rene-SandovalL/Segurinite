@@ -62,7 +62,8 @@ interface PulserasScannerProps {
 
 /**
  * Pantalla 2 del flujo de registro.
- * Muestra las pulseras registradas con estado DISPONIBLE (no asignadas a ningún alumno).
+ * Muestra las pulseras registradas con estado CONECTADA (ya reportaron mac_address
+ * real y todavía no están asignadas a ningún alumno).
  * Al seleccionar una pulsera avanza a la Pantalla 3 (Formulario).
  */
 export function PulserasScanner({ onVolver, onSeleccionarPulsera }: PulserasScannerProps) {
