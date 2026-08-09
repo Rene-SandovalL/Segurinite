@@ -18,11 +18,16 @@ export interface PuertoSerialInfo {
  * Protocolo de línea: GET_ID -> "ID:<n>", SET_ID:<n> -> "OK:<n>" | "ERR:...".
  * Puerto adaptado del bridge de referencia beacon-config-backend/src/beacon.
  */
+interface PendingRequest {
+  prefijos: string[];
+  resolve: (line: string) => void;
+}
+
 @Injectable()
 export class BeaconSerialService implements OnModuleDestroy {
   private port: SerialPort | null = null;
   private parser: ReadlineParser | null = null;
-  private pendingResolve: ((line: string) => void) | null = null;
+  private pendingRequest: PendingRequest | null = null;
 
   async listPorts(): Promise<PuertoSerialInfo[]> {
     return SerialPort.list();
@@ -36,11 +41,21 @@ export class BeaconSerialService implements OnModuleDestroy {
     this.port = new SerialPort({ path, baudRate: BAUD_RATE });
     this.parser = this.port.pipe(new ReadlineParser({ delimiter: '\n' }));
 
-    this.parser.on('data', (line: string) => {
-      if (this.pendingResolve) {
-        const resolve = this.pendingResolve;
-        this.pendingResolve = null;
-        resolve(line.trim());
+    this.parser.on('data', (raw: string) => {
+      const line = raw.trim();
+
+      // El firmware imprime logs de diagnóstico ([stage], [scan], status de
+      // BPM/SpO2/Area, etc.) constantemente en su loop(), sin relación con el
+      // comando en curso. Solo una línea con el prefijo esperado por el
+      // comando pendiente cuenta como su respuesta; cualquier otra se
+      // descarta silenciosamente y se sigue esperando.
+      if (
+        this.pendingRequest &&
+        this.pendingRequest.prefijos.some((prefijo) => line.startsWith(prefijo))
+      ) {
+        const { resolve } = this.pendingRequest;
+        this.pendingRequest = null;
+        resolve(line);
       }
     });
 
@@ -67,6 +82,7 @@ export class BeaconSerialService implements OnModuleDestroy {
 
   private sendCommand(
     command: string,
+    prefijosEsperados: string[],
     timeoutMs = TIMEOUT_MS,
   ): Promise<string> {
     if (!this.port || !this.port.isOpen) {
@@ -75,15 +91,18 @@ export class BeaconSerialService implements OnModuleDestroy {
 
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
-        this.pendingResolve = null;
+        this.pendingRequest = null;
         reject(
           new Error('Tiempo de espera agotado esperando respuesta del beacon'),
         );
       }, timeoutMs);
 
-      this.pendingResolve = (line: string) => {
-        clearTimeout(timer);
-        resolve(line);
+      this.pendingRequest = {
+        prefijos: prefijosEsperados,
+        resolve: (line: string) => {
+          clearTimeout(timer);
+          resolve(line);
+        },
       };
 
       this.port!.write(command + '\n');
@@ -91,13 +110,13 @@ export class BeaconSerialService implements OnModuleDestroy {
   }
 
   async getId(): Promise<{ id: number | null; raw: string }> {
-    const raw = await this.sendCommand('GET_ID');
+    const raw = await this.sendCommand('GET_ID', ['ID:']);
     const match = /^ID:(-?\d+)$/.exec(raw);
     return { id: match ? Number(match[1]) : null, raw };
   }
 
   async setId(id: number): Promise<{ ok: boolean; raw: string }> {
-    const raw = await this.sendCommand(`SET_ID:${id}`);
+    const raw = await this.sendCommand(`SET_ID:${id}`, ['OK:', 'ERR:']);
     return { ok: raw.startsWith('OK'), raw };
   }
 

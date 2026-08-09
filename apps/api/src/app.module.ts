@@ -1,6 +1,7 @@
 import { PrismaModule } from './../prisma/prisma.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AlumnosModule } from './alumnos/alumnos.module';
@@ -16,10 +17,13 @@ import { BeaconsConfigModule } from './beacons-config/beacons-config.module';
 import { PulserasConfigModule } from './pulseras-config/pulseras-config.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { DocentesModule } from './docentes/docentes.module';
+import { AlertasModule } from './alertas/alertas.module';
+import { ConfiguracionModule } from './configuracion/configuracion.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     PrismaModule,
     AlumnosModule,
     GruposModule,
@@ -34,6 +38,8 @@ import { DocentesModule } from './docentes/docentes.module';
     PulserasConfigModule,
     UsuariosModule,
     DocentesModule,
+    AlertasModule,
+    ConfiguracionModule,
   ],
   controllers: [AppController],
   providers: [AppService],

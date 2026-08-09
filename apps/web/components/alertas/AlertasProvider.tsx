@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 
 export type AlertaNivel = "peligro";
 
@@ -12,6 +12,7 @@ export interface Alerta {
   createdAt: number;
   nivel: AlertaNivel;
   grupoId?: string;
+  grupoNombre?: string;
 }
 
 interface AlertasContextValue {
@@ -29,14 +30,11 @@ interface AlertasProviderProps {
 
 export function AlertasProvider({ children }: AlertasProviderProps) {
   const [alertas, setAlertas] = useState<Alerta[]>([]);
-  const totalMostradasRef = useRef(0);
 
   const pushAlerta = useCallback((alerta: Alerta) => {
     setAlertas((actuales) => {
-      if (totalMostradasRef.current >= 2) {
-        return actuales;
-      }
-
+      // Máximo 2 toasts visibles a la vez (no es un límite de por vida —
+      // AlertaToast se auto-descarta solo, así que la ventana va rotando).
       if (actuales.length >= 2) {
         return actuales;
       }
@@ -49,7 +47,6 @@ export function AlertasProvider({ children }: AlertasProviderProps) {
         return actuales;
       }
 
-      totalMostradasRef.current += 1;
       return [...actuales, alerta];
     });
   }, []);

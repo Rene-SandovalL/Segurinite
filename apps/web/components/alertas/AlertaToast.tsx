@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Alerta } from "./AlertasProvider";
+
+const DURACION_AUTO_DESCARTE_MS = 8000;
 
 interface AlertaToastProps {
   alerta: Alerta;
@@ -11,6 +13,8 @@ interface AlertaToastProps {
 
 export function AlertaToast({ alerta, onDismiss }: AlertaToastProps) {
   const [visible, setVisible] = useState(false);
+  const onDismissRef = useRef(onDismiss);
+  onDismissRef.current = onDismiss;
 
   useEffect(() => {
     const rafId = requestAnimationFrame(() => {
@@ -22,13 +26,20 @@ export function AlertaToast({ alerta, onDismiss }: AlertaToastProps) {
     };
   }, []);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setVisible(false);
 
     window.setTimeout(() => {
-      onDismiss(alerta.id);
+      onDismissRef.current(alerta.id);
     }, 220);
-  };
+  }, [alerta.id]);
+
+  // Se auto-descarta sola para que el cupo de "2 toasts visibles" no se
+  // trabe esperando que alguien la cierre a mano.
+  useEffect(() => {
+    const timeoutId = window.setTimeout(handleClose, DURACION_AUTO_DESCARTE_MS);
+    return () => window.clearTimeout(timeoutId);
+  }, [handleClose]);
 
   const rutaVer = alerta.grupoId
     ? `/groups/${alerta.grupoId}/mapa`
@@ -48,12 +59,17 @@ export function AlertaToast({ alerta, onDismiss }: AlertaToastProps) {
         <div className="flex-1 p-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-[#C0392B] font-bold" style={{ fontSize: 16 }}>
-                Alerta critica
+              <p className="text-[#2F2F2F] font-bold" style={{ fontSize: 16 }}>
+                Alerta
               </p>
               <p className="text-[#2F2F2F] font-bold mt-0.5" style={{ fontSize: 16 }}>
                 {alerta.alumnoNombre}
               </p>
+              {alerta.grupoNombre && (
+                <p className="text-[#8B8B8B]" style={{ fontSize: 13 }}>
+                  {alerta.grupoNombre}
+                </p>
+              )}
             </div>
 
             <span className="text-[#8B8B8B]" style={{ fontSize: 12 }}>

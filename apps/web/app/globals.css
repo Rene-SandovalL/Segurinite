@@ -9,6 +9,8 @@
   --color-borde: #e5e7eb;
   --color-texto-titulo: #2d2d2d;
   --color-texto-secundario: #6b7280;
+  --color-resuelta: #87d67b;
+  --color-card-agrupada: #eeeef2;
 }
 
 @layer base {

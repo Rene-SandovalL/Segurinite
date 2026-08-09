@@ -10,6 +10,8 @@ import {
 } from "@/lib/mock/grupos";
 import { logoutAdmin } from "@/lib/api/auth";
 import { DispositivosPanel, type VistaDispositivos } from "@/components/dispositivos/dispositivos-panel";
+import { AlertasPanel } from "@/components/alertas/AlertasPanel";
+import { ConfiguracionPanel } from "@/components/configuracion/ConfiguracionPanel";
 
 interface FondoDinamicoProps {
   children: React.ReactNode;
@@ -103,6 +105,8 @@ export function FondoDinamico({ children, grupos }: FondoDinamicoProps) {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [cerrandoSesion, setCerrandoSesion] = useState(false);
   const [vistaDispositivos, setVistaDispositivos] = useState<VistaDispositivos | null>(null);
+  const [alertasAbiertas, setAlertasAbiertas] = useState(false);
+  const [configuracionAbierta, setConfiguracionAbierta] = useState(false);
   // La ruta es /groups/[grupoId]/... — el grupoId está en el segmento índice 2
   const segmentos = pathname.split("/");
   const grupoId = segmentos[2] ?? "";
@@ -120,6 +124,8 @@ export function FondoDinamico({ children, grupos }: FondoDinamicoProps) {
   useEffect(() => {
     setMenuAbierto(false);
     setVistaDispositivos(null);
+    setAlertasAbiertas(false);
+    setConfiguracionAbierta(false);
   }, [pathname]);
 
   const handleCerrarSesion = async () => {
@@ -167,6 +173,10 @@ export function FondoDinamico({ children, grupos }: FondoDinamicoProps) {
             onCambiarVista={setVistaDispositivos}
             onSalir={() => setVistaDispositivos(null)}
           />
+        ) : alertasAbiertas ? (
+          <AlertasPanel onSalir={() => setAlertasAbiertas(false)} />
+        ) : configuracionAbierta ? (
+          <ConfiguracionPanel onSalir={() => setConfiguracionAbierta(false)} />
         ) : (
           children
         )}
@@ -209,7 +219,15 @@ export function FondoDinamico({ children, grupos }: FondoDinamicoProps) {
             </div>
 
             <div className="mt-4">
-              <MenuDerechoButton label="Ver historial de alertas" />
+              <MenuDerechoButton
+                label="Ver historial de alertas"
+                onClick={() => {
+                  setVistaDispositivos(null);
+                  setConfiguracionAbierta(false);
+                  setAlertasAbiertas(true);
+                  setMenuAbierto(false);
+                }}
+              />
             </div>
 
             <div className="text-[#3A3A3AAA] font-normal mt-6" style={{ fontSize: "clamp(22px, 2vw, 30px)" }}>
@@ -221,11 +239,21 @@ export function FondoDinamico({ children, grupos }: FondoDinamicoProps) {
               <MenuDerechoButton
                 label="Dispositivos"
                 onClick={() => {
+                  setAlertasAbiertas(false);
+                  setConfiguracionAbierta(false);
                   setVistaDispositivos("menu");
                   setMenuAbierto(false);
                 }}
               />
-              <MenuDerechoButton label="Configuración" />
+              <MenuDerechoButton
+                label="Configuración"
+                onClick={() => {
+                  setAlertasAbiertas(false);
+                  setVistaDispositivos(null);
+                  setConfiguracionAbierta(true);
+                  setMenuAbierto(false);
+                }}
+              />
               <MenuDerechoButton label="Soporte Técnico" />
             </div>
 

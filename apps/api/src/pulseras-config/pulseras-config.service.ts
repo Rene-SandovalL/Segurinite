@@ -28,11 +28,16 @@ export interface PulseraConfigSerial {
  * intenta (re)conectarse de verdad (hasta ~10s en WiFi).
  * Puerto adaptado del bridge de referencia beacon-config-backend/src/device-config.
  */
+interface PendingRequest {
+  prefijos: string[];
+  resolve: (line: string) => void;
+}
+
 @Injectable()
 export class PulseraSerialService implements OnModuleDestroy {
   private port: SerialPort | null = null;
   private parser: ReadlineParser | null = null;
-  private pendingResolve: ((line: string) => void) | null = null;
+  private pendingRequest: PendingRequest | null = null;
 
   async listPorts(): Promise<PuertoSerialInfo[]> {
     return SerialPort.list();
@@ -46,11 +51,21 @@ export class PulseraSerialService implements OnModuleDestroy {
     this.port = new SerialPort({ path, baudRate: BAUD_RATE });
     this.parser = this.port.pipe(new ReadlineParser({ delimiter: '\n' }));
 
-    this.parser.on('data', (line: string) => {
-      if (this.pendingResolve) {
-        const resolve = this.pendingResolve;
-        this.pendingResolve = null;
-        resolve(line.trim());
+    this.parser.on('data', (raw: string) => {
+      const line = raw.trim();
+
+      // El firmware imprime logs de diagnóstico ([stage], [scan], status de
+      // BPM/SpO2/Area, etc.) constantemente en su loop(), sin relación con el
+      // comando en curso. Solo una línea con el prefijo esperado por el
+      // comando pendiente cuenta como su respuesta; cualquier otra se
+      // descarta silenciosamente y se sigue esperando.
+      if (
+        this.pendingRequest &&
+        this.pendingRequest.prefijos.some((prefijo) => line.startsWith(prefijo))
+      ) {
+        const { resolve } = this.pendingRequest;
+        this.pendingRequest = null;
+        resolve(line);
       }
     });
 
@@ -77,6 +92,7 @@ export class PulseraSerialService implements OnModuleDestroy {
 
   private sendCommand(
     command: string,
+    prefijosEsperados: string[],
     timeoutMs = TIMEOUT_MS,
   ): Promise<string> {
     if (!this.port || !this.port.isOpen) {
@@ -85,7 +101,7 @@ export class PulseraSerialService implements OnModuleDestroy {
 
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
-        this.pendingResolve = null;
+        this.pendingRequest = null;
         reject(
           new Error(
             'Tiempo de espera agotado esperando respuesta de la pulsera',
@@ -93,9 +109,12 @@ export class PulseraSerialService implements OnModuleDestroy {
         );
       }, timeoutMs);
 
-      this.pendingResolve = (line: string) => {
-        clearTimeout(timer);
-        resolve(line);
+      this.pendingRequest = {
+        prefijos: prefijosEsperados,
+        resolve: (line: string) => {
+          clearTimeout(timer);
+          resolve(line);
+        },
       };
 
       this.port!.write(command + '\n');
@@ -125,7 +144,7 @@ export class PulseraSerialService implements OnModuleDestroy {
   }
 
   async getConfig(): Promise<PulseraConfigSerial> {
-    const line = await this.sendCommand('GET_CONFIG');
+    const line = await this.sendCommand('GET_CONFIG', ['CONFIG:']);
     return this.parseConfigLine(line);
   }
 
@@ -133,7 +152,10 @@ export class PulseraSerialService implements OnModuleDestroy {
     ssid: string,
     password: string,
   ): Promise<{ ok: boolean; raw: string }> {
-    const raw = await this.sendCommand(`SET_WIFI:${ssid}|${password}`);
+    const raw = await this.sendCommand(`SET_WIFI:${ssid}|${password}`, [
+      'OK:',
+      'ERR:',
+    ]);
     return { ok: raw.startsWith('OK'), raw };
   }
 
@@ -141,7 +163,10 @@ export class PulseraSerialService implements OnModuleDestroy {
     broker: string,
     port: number,
   ): Promise<{ ok: boolean; raw: string }> {
-    const raw = await this.sendCommand(`SET_MQTT:${broker}|${port}`);
+    const raw = await this.sendCommand(`SET_MQTT:${broker}|${port}`, [
+      'OK:',
+      'ERR:',
+    ]);
     return { ok: raw.startsWith('OK'), raw };
   }
 

@@ -11,6 +11,11 @@ import type { ZonaMock } from "@/lib/mock/zonas";
 import type { EstadoPulsera } from "@/types/pulsera";
 import type { TipoZona } from "@/types/zona";
 import type { DocenteGrupo } from "@/types/usuario";
+import type { Alerta, AlertaSeveridad, AlertaTipo } from "@/types/alerta";
+import type {
+  ConfiguracionAlertas,
+  ConfiguracionHorario,
+} from "@/types/configuracion";
 import { apiFetch, ApiHttpError } from "./client";
 
 interface GrupoColorApiResponse {
@@ -395,6 +400,7 @@ function mapAlumno(alumno: AlumnoApiResponse): AlumnoMock {
     apellido: alumno.apellido,
     iniciales: initialsFromName(alumno.nombre, alumno.apellido),
     grupoId: alumno.grupo ? String(alumno.grupo.id) : "",
+    grupoNombre: alumno.grupo?.nombre,
     grupoColor: alumno.grupo
       ? resolverColorHex(alumno.grupo.colorHex)
       : undefined,
@@ -506,6 +512,20 @@ export async function getAlumnoById(
 ): Promise<AlumnoMock | undefined> {
   const alumnos = await getAlumnosByGrupo(grupoId);
   return alumnos.find((alumno) => alumno.id === alumnoId);
+}
+
+/** A diferencia de getAlumnoById, no requiere saber el grupoId de antemano. */
+export async function getAlumnoPorId(alumnoId: string): Promise<AlumnoMock | undefined> {
+  try {
+    const alumno = await fetchApi<AlumnoApiResponse>(`/alumnos/${alumnoId}`);
+    return mapAlumno(alumno);
+  } catch (error) {
+    if (error instanceof ApiHttpError && error.status === 404) {
+      return undefined;
+    }
+
+    throw error;
+  }
 }
 
 export async function getPulserasConectadas(): Promise<PulseraConectada[]> {
@@ -819,5 +839,76 @@ export async function configurarMqttPulsera(
   return fetchApi<ComandoSerialResponse>("/pulseras-config/mqtt", {
     method: "POST",
     body: JSON.stringify({ broker, port }),
+  });
+}
+
+interface AlertaApiResponse {
+  id: string;
+  alumnoId: string;
+  alumnoNombre: string;
+  grupoId: number | null;
+  grupoNombre: string | null;
+  tipo: AlertaTipo;
+  severidad: AlertaSeveridad;
+  createdAt: string;
+  resuelta: boolean;
+  resueltaAt: string | null;
+  resueltaPor: { nombre: string; rol: "ADMIN" | "DOCENTE" } | null;
+  notas: string | null;
+}
+
+function mapAlerta(alerta: AlertaApiResponse): Alerta {
+  return {
+    id: alerta.id,
+    alumnoId: alerta.alumnoId,
+    alumnoNombre: alerta.alumnoNombre,
+    grupoId: alerta.grupoId !== null ? String(alerta.grupoId) : null,
+    grupoNombre: alerta.grupoNombre,
+    tipo: alerta.tipo,
+    severidad: alerta.severidad,
+    createdAt: alerta.createdAt,
+    resuelta: alerta.resuelta,
+    resueltaAt: alerta.resueltaAt,
+    resueltaPor: alerta.resueltaPor,
+    notas: alerta.notas,
+  };
+}
+
+export async function getAlertas(resuelta?: boolean): Promise<Alerta[]> {
+  const query = resuelta === undefined ? "" : `?resuelta=${resuelta}`;
+  const alertas = await fetchApi<AlertaApiResponse[]>(`/alertas${query}`);
+  return alertas.map(mapAlerta);
+}
+
+export async function resolverAlerta(id: string): Promise<Alerta> {
+  const alerta = await fetchApi<AlertaApiResponse>(`/alertas/${id}/resolver`, {
+    method: "PATCH",
+  });
+  return mapAlerta(alerta);
+}
+
+export async function getConfiguracionHorario(): Promise<ConfiguracionHorario> {
+  return fetchApi<ConfiguracionHorario>("/configuracion/horario");
+}
+
+export async function actualizarConfiguracionHorario(
+  payload: Omit<ConfiguracionHorario, "updatedAt">,
+): Promise<ConfiguracionHorario> {
+  return fetchApi<ConfiguracionHorario>("/configuracion/horario", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getConfiguracionAlertas(): Promise<ConfiguracionAlertas> {
+  return fetchApi<ConfiguracionAlertas>("/configuracion/alertas");
+}
+
+export async function actualizarConfiguracionAlertas(
+  payload: Omit<ConfiguracionAlertas, "updatedAt">,
+): Promise<ConfiguracionAlertas> {
+  return fetchApi<ConfiguracionAlertas>("/configuracion/alertas", {
+    method: "PATCH",
+    body: JSON.stringify(payload),
   });
 }

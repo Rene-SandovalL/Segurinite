@@ -33,6 +33,7 @@ export interface Alumno {
   apellido: string;     // Ej: "GONZALEZ"
   iniciales: string;    // Ej: "AG" — se muestra en el avatar
   grupoId: string;      // ID del grupo al que pertenece
+  grupoNombre?: string;
   grupoColor?: GrupoColorAlumno;
   estado: EstadoAlumno; // Para el semáforo de color
   nombreCompleto?: string;

@@ -33,14 +33,14 @@ model alumnos {
   fecha_nacimiento DateTime?            @db.Date
   tipo_sangre      alumnos_tipo_sangre?
   estado           alumnos_estado       @default(normal)
-  foto_url         String?
   created_at       DateTime             @default(now()) @db.Timestamp(0)
   updated_at       DateTime             @default(now()) @db.Timestamp(0)
-  alumno_contactos alumno_contactos[]
-  asistencias      asistencias[]
+  foto_url         String?
   alertas          alertas[]
+  alumno_contactos alumno_contactos[]
   grupos           grupos?              @relation(fields: [grupo_id], references: [id], map: "fk_alumnos_grupo")
   pulseras         pulseras?            @relation(fields: [pulsera_id], references: [id], map: "fk_alumnos_pulsera")
+  asistencias      asistencias[]
 
   @@index([grupo_id], map: "idx_alumnos_grupo_id")
 }
@@ -51,9 +51,9 @@ model grupos {
   color_id   Int       @unique(map: "uq_grupos_color_id")
   created_at DateTime  @default(now()) @db.Timestamp(0)
   alumnos    alumnos[]
+  docentes   docentes?
   colores    colores   @relation(fields: [color_id], references: [id], map: "fk_grupos_color")
   zonas      zonas?
-  docentes   docentes?
 
   @@index([color_id], map: "idx_grupos_color_id")
 }
@@ -63,24 +63,24 @@ model colores {
   nombre     String?   @db.VarChar(60)
   valor_hex  String    @unique(map: "uq_colores_valor_hex") @db.Char(7)
   created_at DateTime  @default(now()) @db.Timestamp(0)
-  grupos     grupos?
   beacons    beacons[]
+  grupos     grupos?
 }
 
 model pulseras {
   id               BigInt          @id @default(autoincrement())
   uuid             String          @unique(map: "uq_pulseras_uuid") @db.VarChar(64)
-  alias            String?         @db.VarChar(60)
   estado           pulseras_estado @default(DISPONIBLE)
   mac_address      String?         @unique(map: "uq_pulseras_mac") @db.VarChar(17)
   bateria          Int?
   last_seen_at     DateTime?       @db.Timestamp(0)
+  created_at       DateTime        @default(now()) @db.Timestamp(0)
+  updated_at       DateTime        @default(now()) @db.Timestamp(0)
+  ultima_temp      Decimal?        @db.Decimal(4, 1)
   ultimo_beacon_id Int?
   ultimo_bpm       Int?
   ultimo_spo2      Decimal?        @db.Decimal(4, 1)
-  ultima_temp      Decimal?        @db.Decimal(4, 1)
-  created_at       DateTime        @default(now()) @db.Timestamp(0)
-  updated_at       DateTime        @default(now()) @db.Timestamp(0)
+  alias            String?         @db.VarChar(60)
   alumnos          alumnos?
 }
 
@@ -91,11 +91,104 @@ model usuarios {
   rol                      usuarios_rol  @default(ADMIN)
   refresh_token_hash       String?       @db.VarChar(255)
   refresh_token_expires_at DateTime?     @db.Timestamp(0)
-  foto_url                 String?
   created_at               DateTime      @default(now()) @db.Timestamp(0)
   updated_at               DateTime      @default(now()) @db.Timestamp(0)
-  asistencias_confirmadas  asistencias[]
+  foto_url                 String?
   alertas_resueltas        alertas[]
+  asistencias_confirmadas  asistencias[]
+  docentes                 docentes?
+}
+
+model zonas {
+  id         Int       @id @default(autoincrement())
+  nombre     String    @db.VarChar(60)
+  tipo       zona_tipo @default(SALON)
+  grupo_id   Int?      @unique(map: "uq_zonas_grupo_id")
+  created_at DateTime  @default(now()) @db.Timestamp(0)
+  beacons    beacons[]
+  grupos     grupos?   @relation(fields: [grupo_id], references: [id], map: "fk_zonas_grupo")
+}
+
+model mapas {
+  id         Int       @id @default(autoincrement())
+  nombre     String    @db.VarChar(60)
+  imagen_url String    @db.VarChar(500)
+  created_at DateTime  @default(now()) @db.Timestamp(0)
+  beacons    beacons[]
+}
+
+model beacons {
+  id          Int      @id @default(autoincrement())
+  beacon_id   Int      @unique(map: "uq_beacons_beacon_id")
+  zona_id     Int
+  mapa_id     Int?
+  nombre      String?  @db.VarChar(60)
+  pos_x       Decimal? @db.Decimal(5, 4)
+  pos_y       Decimal? @db.Decimal(5, 4)
+  activo      Boolean  @default(true)
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  mac_address String?  @unique(map: "uq_beacons_mac_address") @db.VarChar(17)
+  color_id    Int?
+  colores     colores? @relation(fields: [color_id], references: [id], map: "fk_beacons_color")
+  mapas       mapas?   @relation(fields: [mapa_id], references: [id], map: "fk_beacons_mapa")
+  zonas       zonas    @relation(fields: [zona_id], references: [id], map: "fk_beacons_zona")
+
+  @@index([zona_id], map: "idx_beacons_zona_id")
+  @@index([mapa_id], map: "idx_beacons_mapa_id")
+  @@index([color_id], map: "idx_beacons_color_id")
+}
+
+model asistencias {
+  id                BigInt            @id @default(autoincrement())
+  alumno_id         BigInt
+  fecha             DateTime          @db.Date
+  primera_deteccion DateTime?         @db.Timestamp(0)
+  ultima_deteccion  DateTime?         @db.Timestamp(0)
+  estado            asistencia_estado @default(AUSENTE)
+  confirmado_manual Boolean           @default(false)
+  confirmado_por    BigInt?
+  created_at        DateTime          @default(now()) @db.Timestamp(0)
+  updated_at        DateTime          @default(now()) @db.Timestamp(0)
+  alumnos           alumnos           @relation(fields: [alumno_id], references: [id], onDelete: Cascade, map: "fk_asistencias_alumno")
+  usuarios          usuarios?         @relation(fields: [confirmado_por], references: [id], map: "fk_asistencias_confirmado_por")
+
+  @@unique([alumno_id, fecha], map: "uq_asistencias_alumno_fecha")
+  @@index([fecha], map: "idx_asistencias_fecha")
+}
+
+model alertas {
+  id           BigInt           @id @default(autoincrement())
+  alumno_id    BigInt
+  tipo         alerta_tipo
+  severidad    alerta_severidad @default(ALERTA)
+  valor        Decimal?         @db.Decimal(5, 2)
+  beacon_id    Int?
+  created_at   DateTime         @default(now()) @db.Timestamp(0)
+  resuelta_at  DateTime?        @db.Timestamp(0)
+  resuelta_por BigInt?
+  notas        String?          @db.VarChar(255)
+  alumnos      alumnos          @relation(fields: [alumno_id], references: [id], onDelete: Cascade, map: "fk_alertas_alumno")
+  usuarios     usuarios?        @relation(fields: [resuelta_por], references: [id], map: "fk_alertas_resuelta_por")
+
+  @@index([alumno_id, created_at], map: "idx_alertas_alumno_created_at")
+  @@index([created_at], map: "idx_alertas_created_at")
+}
+
+model docentes {
+  id               Int       @id @default(autoincrement())
+  nombre           String    @db.VarChar(120)
+  fecha_nacimiento DateTime? @db.Date
+  rfc              String?   @db.VarChar(13)
+  telefono         String?   @db.VarChar(20)
+  correo           String?   @db.VarChar(255)
+  observaciones    String?   @db.VarChar(255)
+  foto_url         String?
+  grupo_id         Int?      @unique(map: "uq_docentes_grupo_id")
+  created_at       DateTime  @default(now()) @db.Timestamp(0)
+  updated_at       DateTime  @default(now()) @db.Timestamp(0)
+  usuario_id       BigInt?   @unique
+  usuarios         usuarios? @relation(fields: [usuario_id], references: [id], onUpdate: NoAction)
+  grupos           grupos?   @relation(fields: [grupo_id], references: [id], map: "fk_docentes_grupo")
 }
 
 enum pulseras_estado {
@@ -129,6 +222,7 @@ enum alumnos_estado {
 
 enum usuarios_rol {
   ADMIN
+  DOCENTE
 }
 
 enum zona_tipo {
@@ -138,67 +232,10 @@ enum zona_tipo {
   OTRO
 }
 
-model zonas {
-  id         Int       @id @default(autoincrement())
-  nombre     String    @db.VarChar(60)
-  tipo       zona_tipo @default(SALON)
-  grupo_id   Int?      @unique(map: "uq_zonas_grupo_id")
-  created_at DateTime  @default(now()) @db.Timestamp(0)
-  grupos     grupos?   @relation(fields: [grupo_id], references: [id], map: "fk_zonas_grupo")
-  beacons    beacons[]
-}
-
-model mapas {
-  id         Int       @id @default(autoincrement())
-  nombre     String    @db.VarChar(60)
-  imagen_url String    @db.VarChar(500)
-  created_at DateTime  @default(now()) @db.Timestamp(0)
-  beacons    beacons[]
-}
-
-model beacons {
-  id          Int      @id @default(autoincrement())
-  beacon_id   Int      @unique(map: "uq_beacons_beacon_id")
-  zona_id     Int
-  mapa_id     Int?
-  color_id    Int?
-  mac_address String?  @unique(map: "uq_beacons_mac_address") @db.VarChar(17)
-  nombre      String?  @db.VarChar(60)
-  pos_x       Decimal? @db.Decimal(5, 4)
-  pos_y       Decimal? @db.Decimal(5, 4)
-  activo      Boolean  @default(true)
-  created_at  DateTime @default(now()) @db.Timestamp(0)
-  zonas       zonas    @relation(fields: [zona_id], references: [id], map: "fk_beacons_zona")
-  mapas       mapas?   @relation(fields: [mapa_id], references: [id], map: "fk_beacons_mapa")
-  colores     colores? @relation(fields: [color_id], references: [id], map: "fk_beacons_color")
-
-  @@index([zona_id], map: "idx_beacons_zona_id")
-  @@index([mapa_id], map: "idx_beacons_mapa_id")
-  @@index([color_id], map: "idx_beacons_color_id")
-}
-
 enum asistencia_estado {
   PRESENTE
   AUSENTE
   TARDANZA
-}
-
-model asistencias {
-  id                BigInt            @id @default(autoincrement())
-  alumno_id         BigInt
-  fecha             DateTime          @db.Date
-  primera_deteccion DateTime?         @db.Timestamp(0)
-  ultima_deteccion  DateTime?         @db.Timestamp(0)
-  estado            asistencia_estado @default(AUSENTE)
-  confirmado_manual Boolean           @default(false)
-  confirmado_por    BigInt?
-  created_at        DateTime          @default(now()) @db.Timestamp(0)
-  updated_at        DateTime          @default(now()) @db.Timestamp(0)
-  alumnos           alumnos           @relation(fields: [alumno_id], references: [id], onDelete: Cascade, map: "fk_asistencias_alumno")
-  usuarios          usuarios?         @relation(fields: [confirmado_por], references: [id], onDelete: SetNull, map: "fk_asistencias_confirmado_por")
-
-  @@unique([alumno_id, fecha], map: "uq_asistencias_alumno_fecha")
-  @@index([fecha], map: "idx_asistencias_fecha")
 }
 
 enum alerta_tipo {
@@ -207,6 +244,8 @@ enum alerta_tipo {
   SPO2_BAJO
   TEMP_ANOMALA
   SIN_SENAL
+  VITAL_SIN_LECTURA
+  FUERA_DE_ZONA
 }
 
 enum alerta_severidad {
@@ -214,35 +253,24 @@ enum alerta_severidad {
   PELIGRO
 }
 
-model alertas {
-  id           BigInt           @id @default(autoincrement())
-  alumno_id    BigInt
-  tipo         alerta_tipo
-  severidad    alerta_severidad @default(ALERTA)
-  valor        Decimal?         @db.Decimal(5, 2)
-  beacon_id    Int?
-  created_at   DateTime         @default(now()) @db.Timestamp(0)
-  resuelta_at  DateTime?        @db.Timestamp(0)
-  resuelta_por BigInt?
-  notas        String?          @db.VarChar(255)
-  alumnos      alumnos          @relation(fields: [alumno_id], references: [id], onDelete: Cascade, map: "fk_alertas_alumno")
-  usuarios     usuarios?        @relation(fields: [resuelta_por], references: [id], onDelete: SetNull, map: "fk_alertas_resuelta_por")
-
-  @@index([alumno_id, created_at], map: "idx_alertas_alumno_created_at")
-  @@index([created_at], map: "idx_alertas_created_at")
+model configuracion_horario {
+  id                          Int      @id @default(1)
+  hora_entrada                DateTime @db.Time
+  hora_salida                 DateTime @db.Time
+  tolerancia_tardanza_minutos Int      @default(10)
+  updated_at                  DateTime @updatedAt
 }
 
-model docentes {
-  id               Int       @id @default(autoincrement())
-  nombre           String    @db.VarChar(120)
-  fecha_nacimiento DateTime? @db.Date
-  rfc              String?   @db.VarChar(13)
-  telefono         String?   @db.VarChar(20)
-  correo           String?   @db.VarChar(255)
-  observaciones    String?   @db.VarChar(255)
-  foto_url         String?
-  grupo_id         Int?      @unique(map: "uq_docentes_grupo_id")
-  created_at       DateTime  @default(now()) @db.Timestamp(0)
-  updated_at       DateTime  @default(now()) @db.Timestamp(0)
-  grupos           grupos?   @relation(fields: [grupo_id], references: [id], map: "fk_docentes_grupo")
+model configuracion_alertas {
+  id                  Int      @id @default(1)
+  temp_alerta_min     Decimal  @default(34.0) @db.Decimal(4, 1)
+  temp_normal_min     Decimal  @default(35.0) @db.Decimal(4, 1)
+  temp_normal_max     Decimal  @default(38.0) @db.Decimal(4, 1)
+  temp_alerta_max     Decimal  @default(40.0) @db.Decimal(4, 1)
+  bpm_alto            Int      @default(140)
+  contador_temp       Int      @default(3)
+  contador_vital_cero Int      @default(8)
+  contador_fuera_zona Int      @default(8)
+  sin_senal_segundos  Int      @default(45)
+  updated_at          DateTime @updatedAt
 }
