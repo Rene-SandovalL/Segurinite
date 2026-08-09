@@ -12,6 +12,7 @@ import { logoutAdmin } from "@/lib/api/auth";
 import { DispositivosPanel, type VistaDispositivos } from "@/components/dispositivos/dispositivos-panel";
 import { AlertasPanel } from "@/components/alertas/AlertasPanel";
 import { ConfiguracionPanel } from "@/components/configuracion/ConfiguracionPanel";
+import { EstadisticasPanel } from "@/components/estadisticas/EstadisticasPanel";
 
 interface FondoDinamicoProps {
   children: React.ReactNode;
@@ -107,6 +108,7 @@ export function FondoDinamico({ children, grupos }: FondoDinamicoProps) {
   const [vistaDispositivos, setVistaDispositivos] = useState<VistaDispositivos | null>(null);
   const [alertasAbiertas, setAlertasAbiertas] = useState(false);
   const [configuracionAbierta, setConfiguracionAbierta] = useState(false);
+  const [estadisticasAbiertas, setEstadisticasAbiertas] = useState(false);
   // La ruta es /groups/[grupoId]/... — el grupoId está en el segmento índice 2
   const segmentos = pathname.split("/");
   const grupoId = segmentos[2] ?? "";
@@ -126,6 +128,7 @@ export function FondoDinamico({ children, grupos }: FondoDinamicoProps) {
     setVistaDispositivos(null);
     setAlertasAbiertas(false);
     setConfiguracionAbierta(false);
+    setEstadisticasAbiertas(false);
   }, [pathname]);
 
   const handleCerrarSesion = async () => {
@@ -177,6 +180,11 @@ export function FondoDinamico({ children, grupos }: FondoDinamicoProps) {
           <AlertasPanel onSalir={() => setAlertasAbiertas(false)} />
         ) : configuracionAbierta ? (
           <ConfiguracionPanel onSalir={() => setConfiguracionAbierta(false)} />
+        ) : estadisticasAbiertas ? (
+          <EstadisticasPanel
+            grupos={grupos}
+            onSalir={() => setEstadisticasAbiertas(false)}
+          />
         ) : (
           children
         )}
@@ -224,6 +232,7 @@ export function FondoDinamico({ children, grupos }: FondoDinamicoProps) {
                 onClick={() => {
                   setVistaDispositivos(null);
                   setConfiguracionAbierta(false);
+                  setEstadisticasAbiertas(false);
                   setAlertasAbiertas(true);
                   setMenuAbierto(false);
                 }}
@@ -241,7 +250,18 @@ export function FondoDinamico({ children, grupos }: FondoDinamicoProps) {
                 onClick={() => {
                   setAlertasAbiertas(false);
                   setConfiguracionAbierta(false);
+                  setEstadisticasAbiertas(false);
                   setVistaDispositivos("menu");
+                  setMenuAbierto(false);
+                }}
+              />
+              <MenuDerechoButton
+                label="Estadísticas"
+                onClick={() => {
+                  setAlertasAbiertas(false);
+                  setVistaDispositivos(null);
+                  setConfiguracionAbierta(false);
+                  setEstadisticasAbiertas(true);
                   setMenuAbierto(false);
                 }}
               />
@@ -250,6 +270,7 @@ export function FondoDinamico({ children, grupos }: FondoDinamicoProps) {
                 onClick={() => {
                   setAlertasAbiertas(false);
                   setVistaDispositivos(null);
+                  setEstadisticasAbiertas(false);
                   setConfiguracionAbierta(true);
                   setMenuAbierto(false);
                 }}

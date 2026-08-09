@@ -11,6 +11,12 @@
   --color-texto-secundario: #6b7280;
   --color-resuelta: #87d67b;
   --color-card-agrupada: #eeeef2;
+  --color-asistencia-presente-bg: #e7f7e4;
+  --color-asistencia-presente-texto: #3b8c4a;
+  --color-asistencia-tardanza-bg: #fdf1dd;
+  --color-asistencia-tardanza-texto: #b9790a;
+  --color-asistencia-ausente-bg: #efefef;
+  --color-asistencia-ausente-texto: #7a7a7a;
 }
 
 @layer base {

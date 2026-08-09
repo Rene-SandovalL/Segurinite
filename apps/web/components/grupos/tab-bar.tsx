@@ -20,6 +20,11 @@ const PESTANAS = [
     etiqueta: "Docente",
     href: (id: string) => `/groups/${id}/docente`,
   },
+  {
+    clave: "asistencia",
+    etiqueta: "Asistencia",
+    href: (id: string) => `/groups/${id}/asistencia`,
+  },
 ] as const;
 
 type ClavePestana = (typeof PESTANAS)[number]["clave"];
@@ -40,6 +45,7 @@ export function TabBar({ grupoId }: TabBarProps) {
   const pestanaActiva: ClavePestana = (() => {
     if (pathname.startsWith(`/groups/${grupoId}/mapa`)) return "mapa";
     if (pathname.startsWith(`/groups/${grupoId}/docente`)) return "docente";
+    if (pathname.startsWith(`/groups/${grupoId}/asistencia`)) return "asistencia";
     return "integrantes";
   })();
 

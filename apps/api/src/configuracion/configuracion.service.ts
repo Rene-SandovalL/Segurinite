@@ -121,9 +121,7 @@ export class ConfiguracionService {
     return `${horas}:${minutos}`;
   }
 
-  private mapHorario(
-    row: configuracion_horario,
-  ): ConfiguracionHorarioResponse {
+  private mapHorario(row: configuracion_horario): ConfiguracionHorarioResponse {
     return {
       horaEntrada: this.formatHora(row.hora_entrada),
       horaSalida: this.formatHora(row.hora_salida),
@@ -132,9 +130,7 @@ export class ConfiguracionService {
     };
   }
 
-  private mapAlertas(
-    row: configuracion_alertas,
-  ): ConfiguracionAlertasResponse {
+  private mapAlertas(row: configuracion_alertas): ConfiguracionAlertasResponse {
     return {
       tempAlertaMin: row.temp_alerta_min.toNumber(),
       tempNormalMin: row.temp_normal_min.toNumber(),

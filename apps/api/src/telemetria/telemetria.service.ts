@@ -1,12 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TimescaleService } from '../../prisma/timescale.service';
-import {
-  alerta_severidad,
-  alerta_tipo,
-  asistencia_estado,
-} from '../generated/prisma/client';
+import { alerta_severidad, alerta_tipo } from '../generated/prisma/client';
 import { ConfiguracionCacheService } from '../configuracion/configuracion-cache.service';
+import { calcularAsistenciaDelMensaje } from './asistencia-horario.util';
 import { PulseraTelemetriaDto } from './dto/pulsera-telemetria.dto';
 import { TelemetriaGateway } from './telemetria.gateway';
 
@@ -103,21 +100,32 @@ export class TelemetriaService {
       temp: dto.temp,
     });
 
-    const fechaHoy = new Date(ahora.toISOString().slice(0, 10));
+    // Fuera de la ventana hora_entrada–hora_salida (hora local de la
+    // escuela) el mensaje no cuenta como asistencia: no crea ni actualiza
+    // ninguna fila (last_seen_at de la pulsera, arriba, sí se actualiza
+    // siempre, eso no cambia).
+    const asistenciaDelMensaje = calcularAsistenciaDelMensaje(
+      ahora,
+      this.configCache.getHorario(),
+    );
 
-    await this.prisma.asistencias.upsert({
-      where: { alumno_id_fecha: { alumno_id: alumnoId, fecha: fechaHoy } },
-      create: {
-        alumno_id: alumnoId,
-        fecha: fechaHoy,
-        primera_deteccion: ahora,
-        ultima_deteccion: ahora,
-        estado: this.calcularEstadoAsistencia(ahora),
-      },
-      update: {
-        ultima_deteccion: ahora,
-      },
-    });
+    if (asistenciaDelMensaje) {
+      const fecha = new Date(asistenciaDelMensaje.fechaLocal);
+
+      await this.prisma.asistencias.upsert({
+        where: { alumno_id_fecha: { alumno_id: alumnoId, fecha } },
+        create: {
+          alumno_id: alumnoId,
+          fecha,
+          primera_deteccion: ahora,
+          ultima_deteccion: ahora,
+          estado: asistenciaDelMensaje.estado,
+        },
+        update: {
+          ultima_deteccion: ahora,
+        },
+      });
+    }
 
     if (!yaInsertadoPorAlerta) {
       await this.insertarTelemetriaHistorica(dto, alumnoId, beaconId);
@@ -271,28 +279,6 @@ export class TelemetriaService {
       INSERT INTO telemetria (time, mac_address, alumno_id, beacon_id, bpm, spo2, temperatura)
       VALUES (now(), ${dto.mac}, ${alumnoId}, ${beaconId}, ${dto.bpm}, ${dto.spo2}, ${dto.temp})
     `;
-  }
-
-  /**
-   * Solo se llama al CREAR la fila de asistencia del día (primera detección),
-   * nunca en updates posteriores — una vez decidido PRESENTE/TARDANZA no se
-   * corrige retroactivamente aunque cambie la configuración de horario.
-   */
-  private calcularEstadoAsistencia(ahora: Date): asistencia_estado {
-    const horario = this.configCache.getHorario();
-    const [horas, minutos] = horario.horaEntrada.split(':').map(Number);
-
-    const limite = new Date(ahora);
-    limite.setHours(
-      horas,
-      minutos + horario.toleranciaTardanzaMinutos,
-      0,
-      0,
-    );
-
-    return ahora > limite
-      ? asistencia_estado.TARDANZA
-      : asistencia_estado.PRESENTE;
   }
 
   private obtenerOCrearEstado(alumnoId: bigint): EstadoAlumnoTelemetria {

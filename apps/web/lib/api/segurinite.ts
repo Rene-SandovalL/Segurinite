@@ -16,6 +16,20 @@ import type {
   ConfiguracionAlertas,
   ConfiguracionHorario,
 } from "@/types/configuracion";
+import type { AsistenciaAlumno } from "@/types/asistencia";
+import type {
+  ConteoPorGrupo,
+  ConteoPorSeveridad,
+  ConteoPorTipo,
+  EstadisticasAsistencia,
+  FiltrosEstadisticas,
+  RankingAlumnosAlertas,
+  RankingFaltas,
+  SerieDiaria,
+  TiempoEnEscuela,
+  TiempoResolucion,
+  VitalesPorGrupo,
+} from "@/types/estadisticas";
 import { apiFetch, ApiHttpError } from "./client";
 
 interface GrupoColorApiResponse {
@@ -887,6 +901,18 @@ export async function resolverAlerta(id: string): Promise<Alerta> {
   return mapAlerta(alerta);
 }
 
+export async function getAsistencias(
+  grupoId: string,
+  fecha?: string,
+): Promise<AsistenciaAlumno[]> {
+  const params = new URLSearchParams({ grupoId });
+  if (fecha) {
+    params.set("fecha", fecha);
+  }
+
+  return fetchApi<AsistenciaAlumno[]>(`/asistencias?${params.toString()}`);
+}
+
 export async function getConfiguracionHorario(): Promise<ConfiguracionHorario> {
   return fetchApi<ConfiguracionHorario>("/configuracion/horario");
 }
@@ -911,4 +937,99 @@ export async function actualizarConfiguracionAlertas(
     method: "PATCH",
     body: JSON.stringify(payload),
   });
+}
+
+/** Traduce los filtros de la pantalla a query string; omite grupoId si es "todos". */
+function queryEstadisticas(filtros: FiltrosEstadisticas): string {
+  const params = new URLSearchParams({
+    fechaInicio: filtros.fechaInicio,
+    fechaFin: filtros.fechaFin,
+  });
+
+  if (filtros.grupoId) {
+    params.set("grupoId", filtros.grupoId);
+  }
+
+  return params.toString();
+}
+
+export async function getEstadisticasAsistencia(
+  filtros: FiltrosEstadisticas,
+): Promise<EstadisticasAsistencia> {
+  return fetchApi(`/estadisticas/asistencia?${queryEstadisticas(filtros)}`);
+}
+
+export async function getRankingFaltas(
+  filtros: FiltrosEstadisticas,
+): Promise<RankingFaltas[]> {
+  return fetchApi(
+    `/estadisticas/asistencia/ranking-faltas?${queryEstadisticas(filtros)}`,
+  );
+}
+
+export async function getAlertasPorTipo(
+  filtros: FiltrosEstadisticas,
+): Promise<ConteoPorTipo[]> {
+  return fetchApi(`/estadisticas/alertas/por-tipo?${queryEstadisticas(filtros)}`);
+}
+
+export async function getAlertasPorGrupo(
+  filtros: FiltrosEstadisticas,
+): Promise<ConteoPorGrupo[]> {
+  return fetchApi(
+    `/estadisticas/alertas/por-grupo?${queryEstadisticas(filtros)}`,
+  );
+}
+
+export async function getRankingAlumnosAlertas(
+  filtros: FiltrosEstadisticas,
+): Promise<RankingAlumnosAlertas[]> {
+  return fetchApi(
+    `/estadisticas/alertas/ranking-alumnos?${queryEstadisticas(filtros)}`,
+  );
+}
+
+export async function getAlertasPorSeveridad(
+  filtros: FiltrosEstadisticas,
+): Promise<ConteoPorSeveridad[]> {
+  return fetchApi(
+    `/estadisticas/alertas/por-severidad?${queryEstadisticas(filtros)}`,
+  );
+}
+
+export async function getAlertasSerieDiaria(
+  filtros: FiltrosEstadisticas,
+): Promise<SerieDiaria[]> {
+  return fetchApi(
+    `/estadisticas/alertas/serie-diaria?${queryEstadisticas(filtros)}`,
+  );
+}
+
+export async function getTiempoResolucionPromedio(
+  filtros: FiltrosEstadisticas,
+): Promise<TiempoResolucion> {
+  return fetchApi(
+    `/estadisticas/alertas/tiempo-resolucion-promedio?${queryEstadisticas(filtros)}`,
+  );
+}
+
+/** Tiempo en escuela es de un solo día: se usa fechaFin del rango. */
+export async function getTiempoEnEscuela(
+  filtros: FiltrosEstadisticas,
+): Promise<TiempoEnEscuela> {
+  const params = new URLSearchParams({ fecha: filtros.fechaFin });
+
+  if (filtros.grupoId) {
+    params.set("grupoId", filtros.grupoId);
+  }
+
+  return fetchApi(`/estadisticas/tiempo-en-escuela?${params.toString()}`);
+}
+
+export async function getVitalesPromedioGrupo(
+  filtros: FiltrosEstadisticas,
+): Promise<VitalesPorGrupo[]> {
+  return fetchApi(
+    `/estadisticas/vitales-promedio-grupo?${queryEstadisticas(filtros)}`,
+  );
 }

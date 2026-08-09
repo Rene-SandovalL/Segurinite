@@ -50,10 +50,16 @@ export default async function MapaPage({ params, searchParams }: Props) {
         className="flex-1 flex flex-col overflow-hidden"
         style={{ padding: "0 clamp(16px, 3.5vw, 51px) clamp(16px, 3.5vw, 51px)" }}
       >
-        <div className="flex items-end justify-between shrink-0">
-          <TabBar grupoId={grupoId} />
+        <TabBar grupoId={grupoId} />
 
-          <div className="flex items-center" style={{ gap: 12, paddingBottom: 18 }}>
+        <div
+          className="flex-1 overflow-hidden bg-white flex flex-col"
+          style={{ borderRadius: "0 25px 25px 25px" }}
+        >
+          <div
+            className="shrink-0 flex items-center justify-end flex-wrap"
+            style={{ padding: "20px clamp(20px, 3vw, 48px) 0", gap: 12 }}
+          >
             {mapas.length > 0 && idSeleccionado !== undefined && (
               <SelectorMapa mapas={mapas} mapaSeleccionadoId={idSeleccionado} />
             )}
@@ -88,30 +94,27 @@ export default async function MapaPage({ params, searchParams }: Props) {
               Administrar mapas
             </Link>
           </div>
-        </div>
 
-        <div
-          className="flex-1 overflow-hidden bg-white flex flex-col"
-          style={{ borderRadius: "0 25px 25px 25px" }}
-        >
-          {!mapaSeleccionado ? (
-            <div className="h-full flex items-center justify-center">
-              <p className="text-[#6A6A6A]" style={{ fontSize: 18 }}>
-                {mapas.length === 0
-                  ? "Todavía no hay mapas cargados. Subí uno para empezar."
-                  : "El mapa seleccionado no existe."}
-              </p>
-            </div>
-          ) : (
-            <MapaEdicion
-              key={mapaSeleccionado.id}
-              mapa={mapaSeleccionado}
-              beaconsSinPosicionIniciales={beaconsSinPosicion}
-              zonas={zonas}
-              grupoId={grupoId}
-              alumnosMapa={alumnosMapa}
-            />
-          )}
+          <div className="flex-1 overflow-hidden flex flex-col">
+            {!mapaSeleccionado ? (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-[#6A6A6A]" style={{ fontSize: 18 }}>
+                  {mapas.length === 0
+                    ? "Todavía no hay mapas cargados. Subí uno para empezar."
+                    : "El mapa seleccionado no existe."}
+                </p>
+              </div>
+            ) : (
+              <MapaEdicion
+                key={mapaSeleccionado.id}
+                mapa={mapaSeleccionado}
+                beaconsSinPosicionIniciales={beaconsSinPosicion}
+                zonas={zonas}
+                grupoId={grupoId}
+                alumnosMapa={alumnosMapa}
+              />
+            )}
+          </div>
         </div>
       </div>
     </>

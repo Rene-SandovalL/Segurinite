@@ -19,6 +19,8 @@ import { UsuariosModule } from './usuarios/usuarios.module';
 import { DocentesModule } from './docentes/docentes.module';
 import { AlertasModule } from './alertas/alertas.module';
 import { ConfiguracionModule } from './configuracion/configuracion.module';
+import { AsistenciasModule } from './asistencias/asistencias.module';
+import { EstadisticasModule } from './estadisticas/estadisticas.module';
 
 @Module({
   imports: [
@@ -40,6 +42,8 @@ import { ConfiguracionModule } from './configuracion/configuracion.module';
     DocentesModule,
     AlertasModule,
     ConfiguracionModule,
+    AsistenciasModule,
+    EstadisticasModule,
   ],
   controllers: [AppController],
   providers: [AppService],
